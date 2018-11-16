@@ -1,0 +1,27 @@
+{
+  "name": "graph-rewrite",
+  "version": "1.0.0",
+  "description": "JavaScript graph rewriting tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "graph",
+    "vf2",
+    "isomorphism",
+    "rewrite"
+  ],
+  "author": "cliffordhc",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "jest": "^23.6.0",
+    "jest-cli": "^23.6.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.11"
+  }
+}
