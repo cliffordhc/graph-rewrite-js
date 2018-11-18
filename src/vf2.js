@@ -1,6 +1,6 @@
 const _ = require('lodash');
-
-const NULL_NODE = -1;
+const { Graph } = require('./graph');
+const { NULL_NODE } = require('./constants');
 
 function findMin(arry, predicate) {
   for (let i = 0; i < arry.length; i += 1) {
@@ -26,94 +26,51 @@ function resetArray(arry, depth) {
   }
 }
 
+class GraphHelper extends Graph {
+  constructor(g) {
+    const remapped = g.remapZeroBased();
+    super(remapped.graph);
+    this.mapping = remapped.mapping;
+    const nCount = this.nodeCount();
+    this.core = Array(nCount).fill(NULL_NODE);
+    this.in = Array(nCount).fill(0);
+    this.out = Array(nCount).fill(0);
+    this.mContainsNode = this.mContainsNode.bind(this);
+    this.mDoesNotContainsNode = this.mDoesNotContainsNode.bind(this);
+    this.inContains = this.inContains.bind(this);
+    this.outContains = this.outContains.bind(this);
+  }
+
+  mDoesNotContainsNode(n) {
+    return this.core[n] === NULL_NODE;
+  }
+
+  mContainsNode(n) {
+    return !this.mDoesNotContainsNode(n);
+  }
+
+  inContains(n) {
+    return this.in[n] > 0 && this.core[n] === NULL_NODE;
+  }
+
+  outContains(n) {
+    return this.out[n] > 0 && this.core[n] === NULL_NODE;
+  }
+}
+
 class Vf2 {
   constructor(g1, g2, clientVerify) {
-    this.g1 = g1;
-    this.g2 = g2;
-    this.c1 = this.g1.numOfNodes();
-    this.c2 = this.g2.numOfNodes();
-    const g1Nodes = Array.from(this.g1.nodes());
-    this.g1NodeMap = g1Nodes.map(([n]) => n);
-    const g2Nodes = Array.from(this.g2.nodes());
-    this.g2NodeMap = g2Nodes.map(([n]) => n);
-    this.g1NodeReverseMap = new Map(g1Nodes.map(([n], i) => [n, i]));
-    this.g2NodeReverseMap = new Map(g2Nodes.map(([n], i) => [n, i]));
-    this.g1Pred = Array(this.c1);
-    this.g1Succ = Array(this.c1);
-    for (let i = 0; i < this.c1; i += 1) {
-      this.g1Succ[i] = new Set(
-        Array.from(this.g1.succ(this.g1NodeMap[i])).map(n => this.g1NodeReverseMap.get(n)),
-      );
-      this.g1Pred[i] = new Set(
-        Array.from(this.g1.pred(this.g1NodeMap[i])).map(n => this.g1NodeReverseMap.get(n)),
-      );
-    }
-
-    this.g2Pred = Array(this.c2);
-    this.g2Succ = Array(this.c2);
-    for (let i = 0; i < this.c2; i += 1) {
-      this.g2Succ[i] = new Set(
-        Array.from(this.g2.succ(this.g2NodeMap[i])).map(n => this.g2NodeReverseMap.get(n)),
-      );
-      this.g2Pred[i] = new Set(
-        Array.from(this.g2.pred(this.g2NodeMap[i])).map(n => this.g2NodeReverseMap.get(n)),
-      );
-    }
+    this.g1 = new GraphHelper(g1);
+    this.g2 = new GraphHelper(g2);
     this.clientVerify = clientVerify;
-    this.core1 = Array(this.c1).fill(NULL_NODE);
-    this.core2 = Array(this.c2).fill(NULL_NODE);
-    this.in1 = Array(this.c1).fill(0);
-    this.out1 = Array(this.c1).fill(0);
-    this.in2 = Array(this.c2).fill(0);
-    this.out2 = Array(this.c2).fill(0);
-    this.mContainsNodeFromG1 = this.mContainsNodeFromG1.bind(this);
-    this.mContainsNodeFromG2 = this.mContainsNodeFromG2.bind(this);
-    this.mDoesNotContainsNodeFromG1 = this.mDoesNotContainsNodeFromG1.bind(this);
-    this.mDoesNotContainsNodeFromG2 = this.mDoesNotContainsNodeFromG2.bind(this);
-    this.in1Contains = this.in1Contains.bind(this);
-    this.out1Contains = this.out1Contains.bind(this);
-    this.in2Contains = this.in2Contains.bind(this);
-    this.out2Contains = this.out2Contains.bind(this);
     this.result = [];
-  }
-
-  mDoesNotContainsNodeFromG1(n) {
-    return this.core1[n] === NULL_NODE;
-  }
-
-  mDoesNotContainsNodeFromG2(n) {
-    return this.core2[n] === NULL_NODE;
-  }
-
-  mContainsNodeFromG1(n) {
-    return !this.mDoesNotContainsNodeFromG1(n);
-  }
-
-  mContainsNodeFromG2(n) {
-    return !this.mDoesNotContainsNodeFromG2(n);
-  }
-
-  in1Contains(n) {
-    return this.in1[n] > 0 && this.core1[n] === NULL_NODE;
-  }
-
-  out1Contains(n) {
-    return this.out1[n] > 0 && this.core1[n] === NULL_NODE;
-  }
-
-  in2Contains(n) {
-    return this.in2[n] > 0 && this.core2[n] === NULL_NODE;
-  }
-
-  out2Contains(n) {
-    return this.out2[n] > 0 && this.core2[n] === NULL_NODE;
   }
 
   verifyNode(n1, n2) {
     if (this.clientVerify) {
       return this.clientVerify.node(
-        this.g1.node(this.g1NodeMap[n1]),
-        this.g2.node(this.g2NodeMap[n2]),
+        this.g1.mapNode(n1),
+        this.g2.mapNode(n2),
       );
     }
     return true;
@@ -122,8 +79,8 @@ class Vf2 {
   verifyEdge(fn1, tn1, fn2, tn2) {
     if (this.clientVerify) {
       return this.clientVerify.edge(
-        this.g1.edge(this.g1NodeMap[fn1], this.g1NodeMap[tn1]),
-        this.g2.edge(this.g2NodeMap[fn2], this.g2NodeMap[tn2]),
+        this.g1.mapEdge(fn1, tn1),
+        this.g2.mapEdge(fn2, tn2),
       );
     }
     return true;
@@ -140,7 +97,8 @@ class Vf2 {
       !verified
       && s.cIn1 >= s.cIn2
       && s.cOut1 >= s.cOut2
-      && this.c1 - s.depth - s.in1 - s.out1 >= this.c2 - s.depth - s.in2 - s.out2
+      && this.g1.nodeCount() - s.depth - s.cIn1 - s.cOut1
+      >= this.g2.nodeCount() - s.depth - s.cIn2 - s.cOut2
     ) {
       verified = true;
     }
@@ -148,28 +106,28 @@ class Vf2 {
   }
 
   verifySucc(n1, n2) {
-    const succ1 = this.g1Succ[n1];
-    const succ2 = this.g2Succ[n2];
+    const succ1 = this.g1.succ(n1);
+    const succ2 = this.g2.succ(n2);
     const succ = new Set();
     let cs1 = 0;
     let cs2 = 0;
 
     succ1.forEach((i1) => {
-      if (this.mContainsNodeFromG1(i1)) {
+      if (this.g1.mContainsNode(i1)) {
         cs1 += 1;
         succ.add(i1);
       }
     });
     succ2.forEach((i2) => {
-      if (this.mContainsNodeFromG2(i2)) {
+      if (this.g2.mContainsNode(i2)) {
         cs2 += 1;
-        succ.add(this.core2[i2]);
+        succ.add(this.g2.core[i2]);
       }
     });
     let verified = cs1 === cs2 && succ.size === cs1;
     if (verified) {
       succ.forEach((i1) => {
-        const i2 = this.core1[i1];
+        const i2 = this.g1.core[i1];
         verified = verified && this.verifyEdge(n1, i1, n2, i2);
       });
     }
@@ -177,27 +135,27 @@ class Vf2 {
   }
 
   verifyPred(n1, n2) {
-    const pred1 = this.g1Pred[n1];
-    const pred2 = this.g2Pred[n2];
+    const pred1 = this.g1.pred(n1);
+    const pred2 = this.g2.pred(n2);
     const pred = new Set();
     let cp1 = 0;
     let cp2 = 0;
     pred1.forEach((i1) => {
-      if (this.mContainsNodeFromG1(i1)) {
+      if (this.g1.mContainsNode(i1)) {
         cp1 += 1;
         pred.add(i1);
       }
     });
     pred2.forEach((i2) => {
-      if (this.mContainsNodeFromG2(i2)) {
+      if (this.g2.mContainsNode(i2)) {
         cp2 += 1;
-        pred.add(this.core2[i2]);
+        pred.add(this.g2.core[i2]);
       }
     });
     let verified = cp1 === cp2 && pred.size === cp1;
     if (verified) {
       pred.forEach((i1) => {
-        const i2 = this.core1[i1];
+        const i2 = this.g1.core[i1];
         verified = verified && this.verifyEdge(i1, n1, i2, n2);
       });
     }
@@ -206,25 +164,25 @@ class Vf2 {
 
   computeP(s) {
     if (s.cOut1 > 0 && s.cOut2 > 0) {
-      const out1 = findAll(this.out1, this.out1Contains);
-      const n2 = findMin(this.out2, this.out2Contains);
+      const out1 = findAll(this.g1.out, this.g1.outContains);
+      const n2 = findMin(this.g2.out, this.g2.outContains);
       return out1.map(n1 => [n1, n2]);
     }
     if (s.cIn1 > 0 && s.cIn2 > 0) {
-      const in1 = findAll(this.in1, this.in1Contains);
-      const n2 = findMin(this.in2, this.in2Contains);
+      const in1 = findAll(this.g1.in, this.g1.inContains);
+      const n2 = findMin(this.g2.in, this.g2.inContains);
       return in1.map(n1 => [n1, n2]);
     }
     if (s.cOut1 === 0 && s.cOut2 === 0 && s.cIn1 === 0 && s.cIn2 === 0) {
-      const in1 = findAll(this.core1, this.mDoesNotContainsNodeFromG1);
-      const n2 = findMin(this.core2, this.mDoesNotContainsNodeFromG2);
+      const in1 = findAll(this.g1.core, this.g1.mDoesNotContainsNode);
+      const n2 = findMin(this.g2.core, this.g2.mDoesNotContainsNode);
       return in1.map(n1 => [n1, n2]);
     }
     return [];
   }
 
   mCoversG2(s) {
-    return s.depth === this.c2;
+    return s.depth === this.g2.nodeCount();
   }
 
   computeSPrime(s, n1, n2) {
@@ -233,33 +191,33 @@ class Vf2 {
     sPrime.depth += 1;
     const { depth } = sPrime;
 
-    const removeFromIn1 = this.in1Contains(n1);
-    const removeFromOut1 = this.out1Contains(n1);
-    const removeFromIn2 = this.in2Contains(n2);
-    const removeFromOut2 = this.out2Contains(n2);
+    const removeFromIn1 = this.g1.inContains(n1);
+    const removeFromOut1 = this.g1.outContains(n1);
+    const removeFromIn2 = this.g2.inContains(n2);
+    const removeFromOut2 = this.g2.outContains(n2);
 
-    const predN1 = this.g1Pred[n1];
+    const predN1 = this.g1.pred(n1);
     predN1.forEach((pred) => {
-      if (!this.in1Contains(pred)) this.in1[pred] = depth;
+      if (!this.g1.inContains(pred)) this.g1.in[pred] = depth;
     });
 
-    const succN1 = this.g1Succ[n1];
+    const succN1 = this.g1.succ(n1);
     succN1.forEach((succ) => {
-      if (!this.out1Contains(succ)) this.out1[succ] = depth;
+      if (!this.g1.outContains(succ)) this.g1.out[succ] = depth;
     });
 
-    const predN2 = this.g2Pred[n2];
+    const predN2 = this.g2.pred(n2);
     predN2.forEach((pred) => {
-      if (!this.in2Contains(pred)) this.in2[pred] = depth;
+      if (!this.g2.inContains(pred)) this.g2.in[pred] = depth;
     });
 
-    const succN2 = this.g2Succ[n2];
+    const succN2 = this.g2.succ(n2);
     succN2.forEach((succ) => {
-      if (!this.out2Contains(succ)) this.out2[succ] = depth;
+      if (!this.g2.outContains(succ)) this.g2.out[succ] = depth;
     });
 
-    this.core1[n1] = n2;
-    this.core2[n2] = n1;
+    this.g1.core[n1] = n2;
+    this.g2.core[n2] = n1;
 
     sPrime.cIn1 += removeFromIn1 ? predN1.size - 1 : predN1.size;
     sPrime.cOut1 += removeFromOut1 ? succN1.size - 1 : succN1.size;
@@ -272,7 +230,6 @@ class Vf2 {
   }
 
   findMatch() {
-    debugger;
     const initial = {
       depth: 0,
       cIn1: 0,
@@ -289,22 +246,20 @@ class Vf2 {
   restoreDataStructures(s) {
     const { n1, n2, depth } = s;
 
-    this.core1[n1] = NULL_NODE;
-    this.core2[n2] = NULL_NODE;
+    this.g1.core[n1] = NULL_NODE;
+    this.g2.core[n2] = NULL_NODE;
 
-    resetArray(this.in1, depth);
-    resetArray(this.out1, depth);
-    resetArray(this.in2, depth);
-    resetArray(this.out2, depth);
+    resetArray(this.g1.in, depth);
+    resetArray(this.g1.out, depth);
+    resetArray(this.g2.in, depth);
+    resetArray(this.g2.out, depth);
   }
 
   formatM() {
-    return this.core2
-      .map((v, k) => ({
-        n1: this.g1NodeMap[v],
-        n2: this.g2NodeMap[k],
-      }))
-      .filter(n => n.v !== NULL_NODE);
+    return this.g2.core
+      .filter(v => v !== NULL_NODE)
+      .map((v, k) => ([this.g1.mapping.fMap.get(v), this.g2.mapping.fMap.get(k)]))
+      .reduce((acc, [k, v]) => _.set(acc, k, v), {});
   }
 
   match(s) {

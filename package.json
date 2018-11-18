@@ -22,6 +22,7 @@
     "jest-cli": "^23.6.0"
   },
   "dependencies": {
+    "cartesian-product-generator": "^1.1.0",
     "lodash": "^4.17.11"
   }
 }
