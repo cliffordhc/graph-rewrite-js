@@ -1,10 +1,20 @@
 const _ = require('lodash');
-const { product } = require('cartesian-product-generator');
 const { Graph } = require('./graph');
+const { OSet } = require('./collections');
 const { NULL_NODE } = require('./constants');
 
-function computeMapping(map, to, from) {
-  return { map, to, from };
+function computeMapping(pmap, to, from = '<>', allowMissing) {
+  const am = allowMissing === undefined ? from === '<>' : allowMissing;
+  const map = { ...pmap, [from]: to };
+  return (m) => {
+    if (_.has(map, m)) {
+      return map[m];
+    }
+    if (am) {
+      return m;
+    }
+    throw Error(`missing mapping in: ${map}`);
+  };
 }
 
 function computeTable(t, label) {
@@ -59,63 +69,17 @@ let difference = new Set(
     // {1}
 */
 
-function NM(a) {
-  return new Map(a.map(v => [v.key, v]));
-}
-
-function IT(a) {
-  return [...a.values()];
-}
-function HAS(a, b) {
-  return a.has(b.key);
-}
-
-function UN(a, b) {
-  return new Map([...a, ...b]);
-}
-
-function INS(a, b) {
-  return new Map(IT(a).filter(x => HAS(b, x)));
-}
-
-function DF(a, b) {
-  return NM(IT(a).filter(([x]) => !HAS(b, x)));
-}
-
-function FMAP(e, ...map) {
-  // let elements = [...e].map(([, v]) => v);
-  const ec = _.isArray(e) ? e : [e];
-  const p = ec.map(a => IT(a));
-  const values = product(...p);
-  const result = [];
-  values.forEach((v) => {
-    map.forEach((f) => {
-      const r = f(...v);
-      if (r) {
-        result.push(r);
-        return true;
-      }
-      return false;
-    });
-  });
-  return NM(result);
-}
-
-function mapElement(el, mapping) {
-  if (mapping) {
-    const { val } = el;
-    const newVal = _.isArray(val)
-      ? val.map(n => mapElement(n))
-      : mapping.map(val);
-    const newEl = { label: mapping.to, val: newVal };
-    const key = JSON.stringify(newEl);
-    return { key, ...newEl };
+function apply(el, map) {
+  if (map) {
+    return _.isArray(el)
+      ? el.map(v => apply(v, map))
+      : map(el);
   }
   return el;
 }
 
 function mapArrow(mapping) {
-  return s => NM(IT(s).map(el => mapElement(el, mapping)));
+  return s => s.map(el => apply(el, mapping));
 }
 
 function EQ(a, b) {
@@ -123,40 +87,49 @@ function EQ(a, b) {
 }
 
 function V(g) {
-  return new Map([...g.graph.nodes()].map(([k]) => (mapElement(k, g.map))));
+  return new OSet(g.graph.nodes().map(v => (apply(['<>', v], g.map))));
 }
 
 function E(g) {
-  return new Map([...g.graph.edgesMap()].map(([, e]) => (mapElement(e, g.map))));
+  return g.graph.edges().map(e => (apply(e.map(e1 => ['<>', e1]), g.map)));
 }
 
-class Rewrite {
+class SePO {
   constructor(l, k, r, k2l, k2r) {
     this.l = computeTable(l, 'l');
     this.k = computeTable(k || l, 'k');
     this.r = computeTable(r || l, 'r');
     const tk2l = k2l || identity(k, l);
-    this.k2l = computeMapping(m => tk2l.get(m), 'l');
+    this.k2l = computeMapping(tk2l, 'l', 'k');
     const tk2r = k2r || identity(k, r);
-    this.k2r = computeMapping(m => tk2r.get(m), 'r');
+    this.k2r = computeMapping(tk2r, 'r', 'k');
   }
 
-  apply(A, l2A) {
-    const { l, k, k2l } = this;
+  apply(graph, mapping) {
+    const A = computeTable(graph, 'A');
+    const l2A = computeMapping(mapping, 'A', 'l');
+    const {
+      l, k, k2l, r, k2r,
+    } = this;
+    const {
+      ins, df, un, el, ev,
+    } = OSet;
     const a = mapArrow(k2l);
-    const m = mapArrow(computeMapping(l2A, 'A'));
+    const m = mapArrow(l2A);
+    const p = mapArrow(k2r);
+
     const src = e => e[0];
     const tgt = e => e[1];
 
     let VD;
     let ED;
     // check left linear and conflict if m(L \ a(K)) ∩ m(a(K)) = EmptySet.
-    if (V(k).size === a(V(k)).size && INS(m(DF(V(l), a(V(k)))), m(a(V(k)))).size === 0) {
+    if (V(k).size === a(V(k)).size && ins(m(df(V(l), a(V(k)))), m(a(V(k)))).size === 0) {
       // VD = VA \ m(VL \ VK)
       // ED = {e ∈ EA \ m(EL \ EK) | srcA(e) ∈ VD ∧ tgtA(e) ∈ VD}
-      VD = DF(V(A), DF(V(l), a(V(k))));
-      const ed2 = FMAP(E(A), e => (HAS(VD, src(e)) && HAS(VD, tgt(e)) ? e : false));
-      ED = UN(DF(E(A), DF(m(E(l)), m(a(E(k))))), ed2);
+      VD = df(V(A), df(V(l), a(V(k))));
+      const ed2 = ev(E(A), e => (el(src(e), VD) && el(tgt(e), VD) ? e : false));
+      ED = un(df(E(A), df(m(E(l)), m(a(E(k))))), ed2);
     }
     // General rules monic match
     if (V(l).size === m(V(l)).size) {
@@ -166,20 +139,28 @@ class Rewrite {
       // γE (e) = e′ if e = he′, u, vi, m(αE (e)) otherwise
       // srcD(e) = u if e = he′, u, vi | srcK(e) otherwise
       // tgtD(e) = v if e = he′, u, vi | tgtK(e) otherwise
-      VD = UN(DF(V(A), m(V(l))), V(k));
+      VD = un(df(V(A), m(V(l))), V(k));
       // eslint-disable-next-line no-nested-ternary
-      const yV = u => (HAS(V(k), u) ? m(a(u)) : (HAS(V(A), u) ? u : false));
-      const t1 = DF(E(A), m(E(l)));
-      ED = UN(FMAP([V(A), VD, VD], (e, u, v) => (
-        HAS(t1, e) && HAS(VD, src(e)) && HAS(VD, tgt(e)) && EQ(src(e), yV(u)) && EQ(tgt(e), yV(v))
+      const yV = u => (el(u, V(k)) ? m(a(u)) : (el(u, V(A)) ? u : false));
+      const t1 = df(E(A), m(E(l)));
+      ED = un(ev([t1, VD, VD], (e, u, v) => (
+        el(e, t1) && el(src(e), VD) && el(tgt(e), VD) && EQ(src(e), yV(u)) && EQ(tgt(e), yV(v))
           ? [e, u, v]
           : false
       )), E(k));
-      const yE = FMAP(ED, e => (EQ(e.label, 'A') ? e : false), e => m(a(e)));
+      // const yE = e => (EQ(e.label, 'A') ? e : m(a(e)));
+      // const srcD = e => (EQ(e.label, 'A') ? e : m(a(e)));
+      // const tgtD = e => (EQ(e.label, 'A') ? e : m(a(src(e))));
     }
+    // pushout
+    const VH = un(VD, df(V(r), p(V(k))));
+    const EH = un(ED, df(E(r), p(E(k))));
+    console.log(VH);
+    console.log(EH);
+    return new Graph([...VH].map(([, n]) => n), [...EH].map(e => e.map(([, n]) => n)));
   }
 }
 
 module.exports = {
-  Rewrite,
+  SePO,
 };

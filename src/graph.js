@@ -1,9 +1,12 @@
 const _ = require('lodash');
+const {
+  EMap, ESet, OMap, OSet,
+} = require('./collections');
 
 const EMPTY_SET = new Set();
 
 function edgeIndex(f, t) {
-  return `${f}:${typeof f}-${t}:${typeof t}`;
+  return `${f}:${typeof f}->${t}:${typeof t}`;
 }
 
 class Graph {
@@ -11,12 +14,13 @@ class Graph {
     if (nodes instanceof Graph) {
       _.merge(this, _.cloneDeep(nodes));
     } else {
-      this.pNodes = new Map();
-      this.pSucc = new Map();
-      this.pPred = new Map();
+      this.pNodes = new ESet();
+      this.pNodeValues = new EMap();
+      this.pSucc = new EMap();
+      this.pPred = new EMap();
       nodes.map(n => this.addNode(n));
-      this.pEdges = new Map();
-      this.pEdgesMap = new Map();
+      this.pEdges = new OSet();
+      this.pEdgeValues = new OMap();
       edges.forEach(([f, t]) => {
         this.addEdge(f, t);
       });
@@ -24,7 +28,7 @@ class Graph {
   }
 
   addNode(n) {
-    this.pNodes.set(n, new Map());
+    this.pNodes.add(n);
     this.pSucc.set(n, new Set());
     this.pPred.set(n, new Set());
   }
@@ -42,8 +46,7 @@ class Graph {
   }
 
   addEdge(f, t) {
-    this.pEdges.set(edgeIndex(f, t), new Map());
-    this.pEdgesMap.set(edgeIndex(f, t), { from: f, to: t });
+    this.pEdges.add([f, t]);
     this.succ(f).add(t);
     this.pred(t).add(f);
   }
@@ -56,10 +59,6 @@ class Graph {
 
   edges() {
     return this.pEdges;
-  }
-
-  edgesMap() {
-    return this.pEdgesMap;
   }
 
   succ(n) {
@@ -79,7 +78,7 @@ class Graph {
   }
 
   edge(f, t) {
-    return this.pEdges.get(edgeIndex(f, t));
+    return this.pEdges.get([f, t]);
   }
 
   nodeCount() {
@@ -96,23 +95,22 @@ class Graph {
 
   remapZeroBased() {
     const nodes = [...this.nodes()];
-    const fMap = new Map(nodes.map(([n], i) => [i, n]));
-    const rMap = new Map(nodes.map(([n], i) => [n, i]));
-    return { mapping: { fMap, rMap }, graph: this.remap(fMap, rMap) };
+    const fMap = new Map(nodes.map((n, i) => [i, n]));
+    const rMap = new Map(nodes.map((n, i) => [n, i]));
+    return { fMap, rMap, graph: this.remap(fMap, rMap) };
   }
 
   remap(fMap, rMap) {
     const ng = this.clone();
     const {
-      pNodes, pSucc, pPred, pEdges, pEdgesMap,
+      pNodes, pSucc, pPred, pEdges,
     } = this;
-    ng.pNodes = new Map();
-    ng.pSucc = new Map();
-    ng.pPred = new Map();
-    ng.pEdges = new Map();
-    ng.pEdgesMap = new Map();
-    pNodes.forEach((v, k) => {
-      ng.pNodes.set(rMap.get(k), v);
+    ng.pNodes = new ESet();
+    ng.pSucc = new EMap();
+    ng.pPred = new EMap();
+    ng.pEdges = new OSet();
+    pNodes.forEach((v) => {
+      ng.pNodes.add(rMap.get(v));
     });
     pSucc.forEach((v, k) => {
       ng.pSucc.set(rMap.get(k), new Set([...v].map(s => rMap.get(s))));
@@ -120,12 +118,10 @@ class Graph {
     pPred.forEach((v, k) => {
       ng.pPred.set(rMap.get(k), new Set([...v].map(s => rMap.get(s))));
     });
-    pEdgesMap.forEach((e, k) => {
-      const f = rMap.get(e.from);
-      const t = rMap.get(e.to);
-      const newIdx = edgeIndex(f, t);
-      ng.pEdges.set(newIdx, pEdges.get(k));
-      ng.pEdgesMap.set(newIdx, { from: f, to: t });
+    pEdges.forEach((e, k) => {
+      const f = rMap.get(k[0]);
+      const t = rMap.get(k[1]);
+      ng.pEdges.add([f, t]);
     });
 
     return ng;
@@ -134,5 +130,5 @@ class Graph {
 
 module.exports = {
   Graph,
-  edgeIndex,
+  OSet,
 };

@@ -28,9 +28,10 @@ function resetArray(arry, depth) {
 
 class GraphHelper extends Graph {
   constructor(g) {
-    const remapped = g.remapZeroBased();
-    super(remapped.graph);
-    this.mapping = remapped.mapping;
+    const zb = g.remapZeroBased();
+    super(zb.graph);
+    this.fMap = zb.fMap;
+    this.rMap = zb.rMap;
     const nCount = this.nodeCount();
     this.core = Array(nCount).fill(NULL_NODE);
     this.in = Array(nCount).fill(0);
@@ -258,7 +259,7 @@ class Vf2 {
   formatM() {
     return this.g2.core
       .filter(v => v !== NULL_NODE)
-      .map((v, k) => ([this.g1.mapping.fMap.get(v), this.g2.mapping.fMap.get(k)]))
+      .map((v, k) => ([this.g1.fMap.get(v), this.g2.fMap.get(k)]))
       .reduce((acc, [k, v]) => _.set(acc, k, v), {});
   }
 
