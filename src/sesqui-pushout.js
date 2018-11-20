@@ -31,44 +31,6 @@ function identity(a, b) {
   )));
 }
 
-/*
-Union
-Union (a ∪ b): create a set that contains the elements of both set a and set b.
-
-let a = new Set([1,2,3]);
-let b = new Set([4,3,2]);
-let union = new Set([...a, ...b]);
-    // {1,2,3,4}
-The pattern is always the same:
-
-Convert one or both sets to arrays.
-Perform the operation.
-Convert the result back to a set.
-As explained in [1], the spread operator (...) inserts the elements of something iterable
-(like a set) into an array. Therefore, [...a, ...b] means that a and b are converted to arrays
-and concatenated. It is equivalent to [...a].concat([...b]).
-
-Intersection
-Intersection (a ∩ b): create a set that contains those elements of set a that are also in set b.
-
-let a = new Set([1,2,3]);
-let b = new Set([4,3,2]);
-let intersection = new Set(
-    [...a].filter(x => b.has(x)));
-    // {2,3}
-Steps: Convert a to an array, filter the elements, convert the result to a set.
-
-Difference
-Difference (a \ b): create a set that contains those elements of set a that are not in set b.
-This operation is also sometimes called minus (-).
-
-let a = new Set([1,2,3]);
-let b = new Set([4,3,2]);
-let difference = new Set(
-    [...a].filter(x => !b.has(x)));
-    // {1}
-*/
-
 function apply(el, map) {
   if (map) {
     return _.isArray(el)
@@ -80,10 +42,6 @@ function apply(el, map) {
 
 function mapArrow(mapping) {
   return s => s.map(el => apply(el, mapping));
-}
-
-function EQ(a, b) {
-  return _.isEqual(a, b);
 }
 
 function V(g) {
@@ -106,7 +64,6 @@ class SePO {
   }
 
   apply(graph, mapping) {
-    debugger;
     const A = computeTable(graph, 'A');
     const l2A = computeMapping(mapping, 'A', 'l');
     const {
