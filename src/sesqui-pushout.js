@@ -13,7 +13,7 @@ function computeMapping(pmap, to, from = '<>', allowMissing) {
     if (am) {
       return m;
     }
-    throw Error(`missing mapping in: ${map}`);
+    throw Error(`missing mapping in: ${JSON.stringify(map)}`);
   };
 }
 
@@ -106,6 +106,7 @@ class SePO {
   }
 
   apply(graph, mapping) {
+    debugger;
     const A = computeTable(graph, 'A');
     const l2A = computeMapping(mapping, 'A', 'l');
     const {
@@ -127,24 +128,26 @@ class SePO {
     if (V(k).size === a(V(k)).size && ins(m(df(V(l), a(V(k)))), m(a(V(k)))).size === 0) {
       // VD = VA \ m(VL \ VK)
       // ED = {e ∈ EA \ m(EL \ EK) | srcA(e) ∈ VD ∧ tgtA(e) ∈ VD}
-      VD = df(V(A), df(V(l), a(V(k))));
-      const ed2 = ev(E(A), e => (el(src(e), VD) && el(tgt(e), VD) ? e : false));
-      ED = un(df(E(A), df(m(E(l)), m(a(E(k))))), ed2);
-    }
-    // General rules monic match
-    if (V(l).size === m(V(l)).size) {
+      VD = df(V(A), m(df(V(l), a(V(k)))));
+      ED = ev(df(E(A), df(m(E(l)), m(a(E(k))))), e => (
+        el(src(e), VD) && el(tgt(e), VD)
+          ? e
+          : false
+      ));
+    } else if (V(l).size === m(V(l)).size) {
+      // General rules monic match
       // VD = VA \ m(VL) ∪· VK
       // γV(u) = m(αV(u)) if u ∈ VK, u if u ∈ VA
       // ED = he, u, vi | e ∈ EA \ m(EL) ∧ u, v ∈ VD ∧ srcA(e) = γV(u) ∧ tgtA(e) = γV(v) ∪· EK
       // γE (e) = e′ if e = he′, u, vi, m(αE (e)) otherwise
-      // srcD(e) = u if e = he′, u, vi | srcK(e) otherwise
-      // tgtD(e) = v if e = he′, u, vi | tgtK(e) otherwise
+      // srcD(e) = u if e = he′, u, vi, srcK(e) otherwise
+      // tgtD(e) = v if e = he′, u, vi, tgtK(e) otherwise
       VD = un(df(V(A), m(V(l))), V(k));
       // eslint-disable-next-line no-nested-ternary
       const yV = u => (el(u, V(k)) ? m(a(u)) : (el(u, V(A)) ? u : false));
       const t1 = df(E(A), m(E(l)));
       ED = un(ev([t1, VD, VD], (e, u, v) => (
-        el(e, t1) && el(src(e), VD) && el(tgt(e), VD) && EQ(src(e), yV(u)) && EQ(tgt(e), yV(v))
+        el(e, t1) && EQ(src(e), yV(u)) && EQ(tgt(e), yV(v))
           ? [e, u, v]
           : false
       )), E(k));
@@ -157,7 +160,7 @@ class SePO {
     const EH = un(ED, df(E(r), p(E(k))));
     console.log(VH);
     console.log(EH);
-    return new Graph([...VH].map(([, n]) => n), [...EH].map(e => e.map(([, n]) => n)));
+    return new Graph([...VH].map(([s, n]) => `${s}-${n}`), [...EH].map(e => e.slice(-2).map(([s, n]) => `${s}-${n}`)));
   }
 }
 

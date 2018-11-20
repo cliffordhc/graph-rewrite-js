@@ -20,32 +20,44 @@ class EMap extends Map {
   }
 }
 
-class OSet extends Map {
+class OSet {
   constructor(args) {
-    let proArgs = args;
-    if (proArgs != null && typeof proArgs[Symbol.iterator] === 'function') {
-      proArgs = [...proArgs].map(v => ([JSON.stringify(v), v]));
+    let valueEntries;
+    if (args != null && typeof args[Symbol.iterator] === 'function') {
+      valueEntries = [...args].map(v => ([JSON.stringify(v), v]));
     }
-    super(proArgs);
+    this.mapValues = valueEntries ? new Map(valueEntries) : new Map();
     this[Symbol.iterator] = this.values;
+  }
+
+  inspect() {
+    return new Set(this.mapValues.values());
+  }
+
+  values() {
+    return this.mapValues.values();
   }
 
   add(item) {
     const key = JSON.stringify(item);
-    this.set(key, item);
+    this.mapValues.set(key, item);
   }
 
   get(item) {
     const key = JSON.stringify(item);
-    return this.get(key);
+    return this.mapValues.get(key);
   }
 
   has(item) {
-    return super.has(JSON.stringify(item));
+    return this.mapValues.has(JSON.stringify(item));
   }
 
   filter(fn) {
     return new OSet([...this].filter(fn));
+  }
+
+  get size() {
+    return this.mapValues.size;
   }
 
   map(fn) {

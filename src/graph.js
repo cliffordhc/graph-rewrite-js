@@ -27,6 +27,18 @@ class Graph {
     }
   }
 
+  static fromJson(json) {
+    const jsonObj = JSON.parse(json);
+    return new Graph(jsonObj.nodes, jsonObj.edges);
+  }
+
+  static toJson(graph) {
+    const nodes = [...graph.nodes()].map(n => ({ id: n }));
+    const edges = [...graph.edges()].map(e => ({ from: e[0], to: e[1] }));
+    const jsonObj = { nodes, edges };
+    return jsonObj;
+  }
+
   addNode(n) {
     this.pNodes.add(n);
     this.pSucc.set(n, new Set());
