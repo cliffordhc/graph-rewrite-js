@@ -146,9 +146,9 @@ class SePO {
       // eslint-disable-next-line no-nested-ternary
       const yV = u => (el(u, V(k)) ? m(a(u)) : (el(u, V(A)) ? u : false));
       const t1 = df(E(A), m(E(l)));
-      ED = un(ev([t1, VD, VD], (e, u, v) => (
-        el(e, t1) && EQ(src(e), yV(u)) && EQ(tgt(e), yV(v))
-          ? [e, u, v]
+      ED = un(ev([VD, VD], (u, v) => (
+        el([yV(u), yV(v)], t1)
+          ? [u, v]
           : false
       )), E(k));
       // const yE = e => (EQ(e.label, 'A') ? e : m(a(e)));
@@ -158,9 +158,7 @@ class SePO {
     // pushout
     const VH = un(VD, df(V(r), p(V(k))));
     const EH = un(ED, df(E(r), p(E(k))));
-    console.log(VH);
-    console.log(EH);
-    return new Graph([...VH].map(([s, n]) => `${s}-${n}`), [...EH].map(e => e.slice(-2).map(([s, n]) => `${s}-${n}`)));
+    return new Graph([...VH].map(([s, n]) => `${s}-${n}`), [...EH].map(e => e.map(([s, n]) => `${s}-${n}`)));
   }
 }
 
