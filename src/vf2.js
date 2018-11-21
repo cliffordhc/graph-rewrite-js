@@ -26,12 +26,14 @@ function resetArray(arry, depth) {
   }
 }
 
-class GraphHelper extends Graph {
-  constructor(g) {
-    const zb = g.remapZeroBased();
-    super(zb.graph);
-    this.fMap = zb.fMap;
-    this.rMap = zb.rMap;
+class GraphHelper {
+  constructor(graph) {
+    const nodes = [...graph.nodes()];
+    this.fMap = new Map(nodes.map((n, i) => [n, i]));
+    this.rMap = new Map(nodes.map((n, i) => [i, n.id]));
+    const remap = p => this.fMap.get(p);
+    this.pPred = new Map(nodes.map((n, i) => [i, new Set([...n.pred].map(remap))]));
+    this.pSucc = new Map(nodes.map((n, i) => [i, new Set([...n.succ].map(remap))]));
     const nCount = this.nodeCount();
     this.core = Array(nCount).fill(NULL_NODE);
     this.in = Array(nCount).fill(0);
@@ -57,6 +59,18 @@ class GraphHelper extends Graph {
   outContains(n) {
     return this.out[n] > 0 && this.core[n] === NULL_NODE;
   }
+
+  nodeCount() {
+    return this.fMap.size;
+  }
+
+  pred(n) {
+    return this.pPred.get(n);
+  }
+
+  succ(n) {
+    return this.pSucc.get(n);
+  }
 }
 
 class Vf2 {
@@ -70,8 +84,8 @@ class Vf2 {
   verifyNode(n1, n2) {
     if (this.clientVerify) {
       return this.clientVerify.node(
-        this.g1.mapNode(n1),
-        this.g2.mapNode(n2),
+        this.g1.rMap(n1),
+        this.g2.rMap(n2),
       );
     }
     return true;
@@ -80,8 +94,8 @@ class Vf2 {
   verifyEdge(fn1, tn1, fn2, tn2) {
     if (this.clientVerify) {
       return this.clientVerify.edge(
-        this.g1.mapEdge(fn1, tn1),
-        this.g2.mapEdge(fn2, tn2),
+        this.g1.rMap(fn1, tn1),
+        this.g2.rMap(fn2, tn2),
       );
     }
     return true;
@@ -259,7 +273,7 @@ class Vf2 {
   formatM() {
     return this.g2.core
       .filter(v => v !== NULL_NODE)
-      .map((v, k) => ([this.g1.fMap.get(v), this.g2.fMap.get(k)]))
+      .map((v, k) => ([this.g1.rMap.get(v), this.g2.rMap.get(k)]))
       .reduce((acc, [k, v]) => _.set(acc, k, v), {});
   }
 

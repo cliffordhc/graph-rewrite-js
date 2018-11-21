@@ -1,70 +1,89 @@
 const _ = require('lodash');
 
-class ESet extends Set {
-  filter(fn) {
-    return new ESet([...this].filter(fn));
+class AElement {
+  constructor(idProps = ['id'], mappedProps = []) {
+    this.idProps = idProps;
+    this.mappedProps = mappedProps;
   }
 
-  map(fn) {
-    return new ESet([...this].map(fn));
+  key() {
+    const keyInternal = (i, that) => {
+      const prop = that[i];
+      if (_.hasIn(prop, 'key')) {
+        return `{${prop.key()}},`;
+      }
+      return `${i}:${typeof that[i]}=${that[i]}`;
+    };
+    return `${this.idProps.map(i => keyInternal(i, this)).join(',')}`;
+  }
+
+  mapTo(mapping) {
+    const mapToInternal = (p, mObj, map) => {
+      const mObj2 = mObj;
+      if (_.hasIn(mObj2[p], 'mapTo')) {
+        mObj2[p] = mObj2[p].mapTo(map);
+      }
+      mObj2[p] = map(mObj2[p]);
+    };
+    const mappedObj = _.clone(this);
+    this.mappedProps.forEach((p) => {
+      mapToInternal(p, mappedObj, mapping);
+    });
+    return mappedObj;
   }
 }
 
-class EMap extends Map {
-  filter(fn) {
-    return new EMap([...this].filter(fn));
-  }
-
-  map(fn) {
-    return new EMap([...this].map(fn));
-  }
-}
-
-class OSet {
+class ASet {
   constructor(args) {
-    let valueEntries;
-    if (args != null && typeof args[Symbol.iterator] === 'function') {
-      valueEntries = [...args].map(v => ([JSON.stringify(v), v]));
+    let items;
+    if (args != null) {
+      if (typeof args[Symbol.iterator] === 'function') {
+        items = [...args].map(v => (v instanceof AElement ? [v.key(), v] : v));
+      }
+      if (args instanceof AElement) {
+        items = [args.key(), args];
+      }
     }
-    this.mapValues = valueEntries ? new Map(valueEntries) : new Map();
+    this.pMap = items ? new Map(items) : new Map();
     this[Symbol.iterator] = this.values;
   }
 
   inspect() {
-    return new Set(this.mapValues.values());
+    return new Set(this.pMap.values());
   }
 
   values() {
-    return this.mapValues.values();
+    return this.pMap.values();
   }
 
   add(item) {
-    const key = JSON.stringify(item);
-    this.mapValues.set(key, item);
+    this.pMap.set(item.key(), item);
   }
 
   get(item) {
-    const key = JSON.stringify(item);
-    return this.mapValues.get(key);
+    return this.pMap.get(item.key());
   }
 
   has(item) {
-    return this.mapValues.has(JSON.stringify(item));
+    return this.pMap.has(item.key());
   }
 
   filter(fn) {
-    return new OSet([...this].filter(fn));
+    return new ASet([...this].filter(fn));
   }
 
   get size() {
-    return this.mapValues.size;
+    return this.pMap.size;
   }
 
   map(fn) {
-    return new OSet([...this].map(fn));
+    return new ASet([...this].map(fn));
   }
 
-/*
+  delete(item) {
+    this.pMap.delete(item.key());
+  }
+  /*
 Union
 Union (a ∪ b): create a set that contains the elements of both set a and set b.
 
@@ -103,7 +122,7 @@ let difference = new Set(
 */
 
   static un(a, b) {
-    return new OSet([...a, ...b]);
+    return new ASet([...a, ...b]);
   }
 
   static ins(a, b) {
@@ -142,67 +161,19 @@ let difference = new Set(
         }
       }
     }
-    return new OSet(result);
+    return new ASet(result);
   }
 
   forEach(fn) {
-    super.forEach((v, k, s) => {
-      fn(v, v, s);
-    });
-  }
-}
-
-class OMap extends Map {
-  constructor(args) {
-    let keyEntries;
-    let proArgs = args;
-    if (proArgs != null && typeof proArgs[Symbol.iterator] === 'function') {
-      proArgs = [...proArgs].map(([k, v]) => ([JSON.stringify(k), v]));
-      keyEntries = [...proArgs].map(([k]) => ([JSON.stringify(k), k]));
-    }
-    super(proArgs);
-    this[Symbol.iterator] = this.entries;
-    this.mapKey = keyEntries ? new Map(keyEntries) : new Map();
+    return [...this].forEach(fn);
   }
 
-  set(key, value) {
-    const skey = JSON.stringify(key);
-    super.set(skey, value);
-    this.mapKey.set(skey, key);
-  }
-
-  get(key) {
-    const skey = JSON.stringify(key);
-    return this.get(skey);
-  }
-
-  has(key) {
-    return super.has(JSON.stringify(key));
-  }
-
-  forEach(fn) {
-    super.forEach((v, k, s) => {
-      fn(v, this.mapKey.get(k), s);
-    });
-  }
-
-  entries() {
-    const iter = super.entries();
-    return {
-      next() {
-        const val = iter.next();
-        if (!val.done) {
-          val.value[0] = this.mapKey.get(val.value[0]);
-        }
-        return val;
-      },
-    };
+  reduce(fn, acc) {
+    return new ASet([...this].reduce(fn, acc));
   }
 }
 
 module.exports = {
-  ESet,
-  EMap,
-  OMap,
-  OSet,
+  ASet,
+  AElement,
 };

@@ -46,14 +46,17 @@ describe('Sesqui-pushout rewriting', () => {
           {
             from: 'A-1',
             to: 'A-2',
+            attributes: {},
           },
         ],
         nodes: [
           {
             id: 'A-1',
+            attributes: {},
           },
           {
             id: 'A-2',
+            attributes: {},
           },
         ],
       },
@@ -81,9 +84,11 @@ describe('Sesqui-pushout rewriting', () => {
         nodes: [
           {
             id: 'A-1',
+            attributes: {},
           },
           {
             id: 'A-3',
+            attributes: {},
           },
         ],
       },
@@ -109,26 +114,32 @@ describe('Sesqui-pushout rewriting', () => {
         {
           from: 'k-1',
           to: 'k-1',
+          attributes: {},
         },
         {
           from: 'k-2',
           to: 'k-1',
+          attributes: {},
         },
         {
           from: 'k-1',
           to: 'k-2',
+          attributes: {},
         },
         {
           from: 'k-2',
           to: 'k-2',
+          attributes: {},
         },
       ],
       nodes: [
         {
           id: 'k-1',
+          attributes: {},
         },
         {
           id: 'k-2',
+          attributes: {},
         },
       ],
     });
@@ -153,14 +164,17 @@ describe('Sesqui-pushout rewriting', () => {
         {
           from: 'A-a',
           to: 'A-a',
+          attributes: {},
         },
       ],
       nodes: [
         {
           id: 'A-a',
+          attributes: {},
         },
         {
           id: 'r-2',
+          attributes: {},
         },
       ],
     });

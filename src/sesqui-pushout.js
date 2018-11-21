@@ -1,7 +1,6 @@
 const _ = require('lodash');
-const { Graph } = require('./graph');
-const { OSet } = require('./collections');
-const { NULL_NODE } = require('./constants');
+const { Graph, Edge } = require('./graph');
+const { ASet } = require('./collections');
 
 function computeMapping(pmap, to, from = '<>', allowMissing) {
   const am = allowMissing === undefined ? from === '<>' : allowMissing;
@@ -13,7 +12,7 @@ function computeMapping(pmap, to, from = '<>', allowMissing) {
     if (am) {
       return m;
     }
-    throw Error(`missing mapping in: ${JSON.stringify(map)}`);
+    throw Error(`missing mapping in: ${JSON.stringify({ m, map })}`);
   };
 }
 
@@ -25,31 +24,20 @@ function computeTable(t, label) {
   return { graph: new Graph(t[0], t[1]), map };
 }
 
-function identity(a, b) {
-  return new Map(a.map(n => (
-    [n, b[n] ? n : NULL_NODE]
-  )));
-}
-
-function apply(el, map) {
-  if (map) {
-    return _.isArray(el)
-      ? el.map(v => apply(v, map))
-      : map(el);
-  }
-  return el;
+function identity(a) {
+  return a.nodes().reduce((acc, n) => _.set(acc, n, n), {});
 }
 
 function mapArrow(mapping) {
-  return s => s.map(el => apply(el, mapping));
+  return s => (_.hasIn(s, 'mapTo') ? s.mapTo(mapping) : s.map(el => el.mapTo(mapping)));
 }
 
 function V(g) {
-  return new OSet(g.graph.nodes().map(v => (apply(['<>', v], g.map))));
+  return g.graph.nodes().map(v => v.mapTo(g.map));
 }
 
 function E(g) {
-  return g.graph.edges().map(e => (apply(e.map(e1 => ['<>', e1]), g.map)));
+  return g.graph.edges().map(e => e.mapTo(g.map));
 }
 
 class SePO {
@@ -57,10 +45,22 @@ class SePO {
     this.l = computeTable(l, 'l');
     this.k = computeTable(k || l, 'k');
     this.r = computeTable(r || l, 'r');
-    const tk2l = k2l || identity(k, l);
+    const tk2l = k2l || identity(l);
     this.k2l = computeMapping(tk2l, 'l', 'k');
-    const tk2r = k2r || identity(k, r);
+    const tk2r = k2r || identity(l);
     this.k2r = computeMapping(tk2r, 'r', 'k');
+  }
+
+  injectRemoveEdge(from, to) {
+    this.k.graph.delNode(from, to);
+  }
+
+  injectRemoveNodeAttrs() {
+
+  }
+
+  injectMergeNodes(nodes) {
+
   }
 
   apply(graph, mapping) {
@@ -71,13 +71,13 @@ class SePO {
     } = this;
     const {
       ins, df, un, el, ev,
-    } = OSet;
+    } = ASet;
     const a = mapArrow(k2l);
     const m = mapArrow(l2A);
     const p = mapArrow(k2r);
 
-    const src = e => e[0];
-    const tgt = e => e[1];
+    const src = e => e.from;
+    const tgt = e => e.to;
 
     let VD;
     let ED;
@@ -104,10 +104,11 @@ class SePO {
       const yV = u => (el(u, V(k)) ? m(a(u)) : (el(u, V(A)) ? u : false));
       const t1 = df(E(A), m(E(l)));
       ED = un(ev([VD, VD], (u, v) => (
-        el([yV(u), yV(v)], t1)
-          ? [u, v]
+        el((new Edge(yV(u), yV(v))).mapTo(A.map), t1)
+          ? new Edge(u, v)
           : false
       )), E(k));
+      debugger
       // const yE = e => (EQ(e.label, 'A') ? e : m(a(e)));
       // const srcD = e => (EQ(e.label, 'A') ? e : m(a(e)));
       // const tgtD = e => (EQ(e.label, 'A') ? e : m(a(src(e))));
@@ -115,7 +116,10 @@ class SePO {
     // pushout
     const VH = un(VD, df(V(r), p(V(k))));
     const EH = un(ED, df(E(r), p(E(k))));
-    return new Graph([...VH].map(([s, n]) => `${s}-${n}`), [...EH].map(e => e.map(([s, n]) => `${s}-${n}`)));
+    return new Graph(
+      [...VH].map(n => `${n.label}-${n.id}`),
+      [...EH].map(e => [`${e.from.label}-${e.from.id}`, `${e.to.label}-${e.to.id}`]),
+    );
   }
 }
 

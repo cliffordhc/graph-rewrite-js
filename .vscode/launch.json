@@ -13,6 +13,17 @@
         "-i",
         "${relativeFile}"
       ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest All",
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": [
+        "-i"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
     }
   ]
 }
