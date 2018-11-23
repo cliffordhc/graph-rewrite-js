@@ -1,9 +1,61 @@
 const _ = require('lodash');
 
 class AElement {
-  constructor(idProps = ['id'], mappedProps = []) {
-    this.idProps = idProps;
-    this.mappedProps = mappedProps;
+  constructor() {
+  }
+
+  keyProps() {
+    return _.keys(this);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  mapProps() {
+    return [];
+  }
+
+  mapTo(mapping) {
+    const mapChild = (child) => {
+      if (child instanceof AElement) {
+        return child.mapTo(mapping);
+      }
+      return mapping[child].values();
+    };
+
+    const cartesian = (propList) => {
+      const [first, ...rest] = propList;
+      const [prop, values] = first;
+      if (_.isEmpty(rest)) {
+        return {
+          next() {
+            const n = values.next();
+            if (n.done) return n;
+            n.value = { [prop]: n.value };
+            return n;
+          },
+          [Symbol.iterator]() { return this; },
+        };
+      }
+      let a = values.next();
+      let restIterator = cartesian(rest);
+      return {
+        next() {
+          if (a.done) return a;
+          const b = restIterator.next();
+          if (b.done) {
+            a = values.next();
+            restIterator = cartesian(rest);
+            return this.next();
+          }
+          b.value[prop] = a.value;
+          return b;
+        },
+        [Symbol.iterator]() { return this; },
+      };
+    };
+
+    const that = _.clone(this);
+    const mapped = this.mapProps().map(p => [p, mapChild(that[p])]);
+    return cartesian(mapped);
   }
 
   key() {
@@ -14,34 +66,27 @@ class AElement {
       }
       return `${i}:${typeof that[i]}=${that[i]}`;
     };
-    return `${this.idProps.map(i => keyInternal(i, this)).join(',')}`;
-  }
-
-  mapTo(mapping) {
-    const mapToInternal = (p, mObj, map) => {
-      const mObj2 = mObj;
-      if (_.hasIn(mObj2[p], 'mapTo')) {
-        mObj2[p] = mObj2[p].mapTo(map);
-      }
-      mObj2[p] = map(mObj2[p]);
-    };
-    const mappedObj = _.clone(this);
-    this.mappedProps.forEach((p) => {
-      mapToInternal(p, mappedObj, mapping);
-    });
-    return mappedObj;
+    return `${this.keyProps().map(i => keyInternal(i, this)).join(',')}`;
   }
 }
 
 class ASet {
   constructor(args) {
-    let items;
-    if (args != null) {
-      if (typeof args[Symbol.iterator] === 'function') {
-        items = [...args].map(v => (v instanceof AElement ? [v.key(), v] : v));
-      }
-      if (args instanceof AElement) {
+    let items = args;
+    if (items != null) {
+      if (items instanceof AElement) {
         items = [args.key(), args];
+      }
+      if (typeof items[Symbol.iterator] === 'function') {
+        items = [...items].map((v) => {
+          if (v instanceof AElement) {
+            return [v.key(), v];
+          }
+          // console.log(v);
+          throw Error('Wrong args type');
+        });
+      } else {
+        throw Error('Wrong args type');
       }
     }
     this.pMap = items ? new Map(items) : new Map();
@@ -81,7 +126,7 @@ class ASet {
   }
 
   delete(item) {
-    this.pMap.delete(item.key());
+    return this.pMap.delete(item.key());
   }
   /*
 Union
@@ -137,31 +182,55 @@ let difference = new Set(
     return a.has(e);
   }
 
+  static eq(e, a) {
+    return a.key() === e.key();
+  }
+
   static ev(e, ...map) {
     // let elements = [...e].map(([, v]) => v);
-    const p = _.isArray(e) ? e : [e];
-
-    // Generate cartesian product of given iterables:
     function* cartesian(head, ...tail) {
       const remainder = tail.length > 0 ? cartesian(...tail) : [[]];
-      // eslint-disable-next-line no-restricted-syntax
-      for (const r of remainder) for (const h of head) yield [h, ...r];
+      try {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const r of remainder) for (const h of head) yield [h, ...r];
+      } catch (err) {
+        console.log(e);
+        console.log(head);
+        throw err;
+      }
     }
 
-    // Example:
-    const values = cartesian(...p);
-    const result = [];
-    // eslint-disable-next-line no-restricted-syntax
-    for (const v of values) {
+    const input = [...(ASet.isIterable(e) ? e : [e])].map(
+      s => (ASet.isIterable(s) ? s : [s]),
+    );
+    const result = new ASet();
+    if (!_.isEmpty(input)) {
+      // Generate cartesian product of given iterables:
+      // Example:
+      const values = cartesian(...input);
       // eslint-disable-next-line no-restricted-syntax
-      for (const f of map) {
-        const r = f(...v);
-        if (r) {
-          result.push(r);
+      for (const v of values) {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const f of map) {
+          const r = f(...v);
+          if (r) {
+            if (ASet.isIterable(r)) {
+              r.forEach(item => result.add(item));
+            } else {
+              result.add(r);
+            }
+          }
         }
       }
     }
-    return new ASet(result);
+    return result;
+  }
+
+  static isIterable(obj) {
+    if (obj == null) {
+      return false;
+    }
+    return typeof obj[Symbol.iterator] === 'function';
   }
 
   forEach(fn) {

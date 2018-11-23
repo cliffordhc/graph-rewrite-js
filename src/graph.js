@@ -21,10 +21,9 @@ class Vertex extends AElement {
 
 class Edge extends AElement {
   constructor(from, to, attributes) {
-    super(['from', 'to', 'label'], ['from', 'to', 'label']);
+    super(['from', 'to'], ['from', 'to']);
     this.from = from || -1;
     this.to = to || -1;
-    this.label = '<>';
     this.attributes = attributes || {};
   }
 }
@@ -56,7 +55,9 @@ class Graph {
 
   static toJson(graph) {
     const nodes = [...graph.nodes()].map(n => ({ id: n.id, attributes: n.attributes }));
-    const edges = [...graph.edges()].map(e => ({ from: e.from.id, to: e.to.id, attributes: e.attributes }));
+    const edges = [...graph.edges()].map(e => ({
+      from: e.from.id, to: e.to.id, attributes: e.attributes,
+    }));
     const jsonObj = { nodes, edges };
     return jsonObj;
   }
@@ -73,6 +74,11 @@ class Graph {
     return this.pNodes.get(n);
   }
 
+  nodeById(id) {
+    return this.node(new Vertex(id));
+  }
+
+
   nodes() {
     return this.pNodes;
   }
@@ -81,30 +87,52 @@ class Graph {
     this.pNodes.add(n);
   }
 
-  delNode(n) {
-    this.pNodes.delete(n);
-    n.succ.forEach((n1) => {
-      this.delEdge(new Edge(n, n1));
-    });
-    n.pred.forEach((n1) => {
-      this.delEdge(new Edge(n1, n));
-    });
+  addNodeId(id) {
+    const newNode = new Vertex(id);
+    this.addNode(newNode);
+    return newNode;
   }
 
-  addEdge(e) {
+  delNode(n) {
+    if (this.pNodes.delete(n)) {
+      n.succ.forEach((n1) => {
+        this.delEdge(new Edge(n, n1));
+      });
+      n.pred.forEach((n1) => {
+        this.delEdge(new Edge(n1, n));
+      });
+    }
+  }
+
+  addEdge(edge, to) {
+    let e;
+    if (edge instanceof Edge) {
+      e = edge;
+    } else if (edge instanceof Vertex && to instanceof Vertex) {
+      e = new Edge(edge, to);
+    } else {
+      throw Error('Wrong arguments');
+    }
     this.pEdges.add(e);
     this.succ(e.from).add(e.to);
     this.pred(e.to).add(e.from);
   }
 
   delEdge(e) {
-    this.pEdges.delete(e);
-    this.succ(e.from).delete(e.to);
-    this.pred(e.to).delete(e.from);
+    if (this.pEdges.delete(e)) {
+      e.from.succ.delete(e.to);
+      e.to.pred.delete(e.from);
+    }
   }
 
   edge(e) {
     return this.pEdges.get(e);
+  }
+
+  edgeByIds(f, t) {
+    const newEdge = new Edge(this.nodeById(f), this.nodeById(t));
+    this.edge(newEdge);
+    return newEdge;
   }
 
   edges() {

@@ -44,18 +44,18 @@ describe('Sesqui-pushout rewriting', () => {
       {
         edges: [
           {
-            from: 'A-1',
-            to: 'A-2',
+            from: 'r-1',
+            to: 'r-2',
             attributes: {},
           },
         ],
         nodes: [
           {
-            id: 'A-1',
+            id: 'r-1',
             attributes: {},
           },
           {
-            id: 'A-2',
+            id: 'r-2',
             attributes: {},
           },
         ],
@@ -83,11 +83,11 @@ describe('Sesqui-pushout rewriting', () => {
         edges: [],
         nodes: [
           {
-            id: 'A-1',
+            id: 'r-1',
             attributes: {},
           },
           {
-            id: 'A-3',
+            id: 'r-3',
             attributes: {},
           },
         ],
@@ -112,33 +112,33 @@ describe('Sesqui-pushout rewriting', () => {
     expect(Graph.toJson(result)).toEqual({
       edges: [
         {
-          from: 'k-1',
-          to: 'k-1',
+          from: 'r-1',
+          to: 'r-1',
           attributes: {},
         },
         {
-          from: 'k-2',
-          to: 'k-1',
+          from: 'r-2',
+          to: 'r-1',
           attributes: {},
         },
         {
-          from: 'k-1',
-          to: 'k-2',
+          from: 'r-1',
+          to: 'r-2',
           attributes: {},
         },
         {
-          from: 'k-2',
-          to: 'k-2',
+          from: 'r-2',
+          to: 'r-2',
           attributes: {},
         },
       ],
       nodes: [
         {
-          id: 'k-1',
+          id: 'r-1',
           attributes: {},
         },
         {
-          id: 'k-2',
+          id: 'r-2',
           attributes: {},
         },
       ],
@@ -162,18 +162,49 @@ describe('Sesqui-pushout rewriting', () => {
     expect(Graph.toJson(result)).toEqual({
       edges: [
         {
-          from: 'A-a',
-          to: 'A-a',
+          from: 'r-1',
+          to: 'r-1',
           attributes: {},
         },
       ],
       nodes: [
         {
-          id: 'A-a',
+          id: 'r-1',
           attributes: {},
         },
         {
           id: 'r-2',
+          attributes: {},
+        },
+      ],
+    });
+  });
+  it('it combines nodes', () => {
+    const g1 = new Graph(['a', 'b'], [['a', 'b']]);
+    const l = new Graph([1, 2], []);
+    const k = new Graph([1, 2], []);
+    const r = new Graph(['1_2'], []);
+    const k2l = { 1: 1, 2: 2 };
+    const k2r = { 1: '1_2', 2: '1_2' };
+
+    const l2g = { 1: 'a', 2: 'b' };
+
+    const sepo = new SePO(l, k, r, k2l, k2r);
+    const result = sepo.apply(g1, l2g);
+
+    graphviz('add', g1, l, k, r, result);
+
+    expect(Graph.toJson(result)).toEqual({
+      edges: [
+        {
+          from: 'r-1_2',
+          to: 'r-1_2',
+          attributes: {},
+        },
+      ],
+      nodes: [
+        {
+          id: 'r-1_2',
           attributes: {},
         },
       ],
