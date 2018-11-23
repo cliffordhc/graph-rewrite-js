@@ -32,12 +32,11 @@ class AElement {
   }
 
   mapTo(mapping) {
-    debugger;
     const mapped = _.keys(this).map(p => [p, () => AElement.mapChild(mapping, this, p)]);
-    return AElement.cartesian(mapped);
+    return AElement.cartesian(mapped, this);
   }
 
-  static cartesian(propList) {
+  static cartesian(propList, that) {
     const [first, ...rest] = propList;
     const [prop, valuesGenerator] = first;
     const values = valuesGenerator();
@@ -46,21 +45,23 @@ class AElement {
         next() {
           const n = values.next();
           if (n.done) { return n; }
-          n.value = { [prop]: n.value };
+          const that2 = _.clone(that);
+          that2[prop] = n.value;
+          n.value = that2;
           return n;
         },
         [Symbol.iterator]() { return this; },
       };
     }
     let a = values.next();
-    let restIterator = AElement.cartesian(rest);
+    let restIterator = AElement.cartesian(rest, that);
     return {
       next() {
         if (a.done) { return { done: true }; }
         const b = restIterator.next();
         if (b.done) {
           a = values.next();
-          restIterator = AElement.cartesian(rest);
+          restIterator = AElement.cartesian(rest, that);
           return this.next();
         }
         b.value[prop] = a.value;
@@ -199,6 +200,27 @@ let difference = new Set(
     return a.key() === e.key();
   }
 
+  static ap(mapping, iterable) {
+    const ts = iterable.values();
+    let val = ts.next();
+    let values;
+    if (!val.done)values = val.value.mapTo(mapping);
+    return {
+      [Symbol.iterator]() { return this; },
+      next() {
+        if (val.done) { return val; }
+        const nextVal = values.next();
+        if (nextVal.done) {
+          val = ts.next();
+          if (val.done) { return val; }
+          values = val.value.mapTo(mapping);
+          return this.next();
+        }
+        return nextVal;
+      },
+    };
+  }
+
   static ev(e, ...map) {
     // let elements = [...e].map(([, v]) => v);
     function* cartesian(head, ...tail) {
@@ -207,8 +229,6 @@ let difference = new Set(
         // eslint-disable-next-line no-restricted-syntax
         for (const r of remainder) for (const h of head) yield [h, ...r];
       } catch (err) {
-        console.log(e);
-        console.log(head);
         throw err;
       }
     }
