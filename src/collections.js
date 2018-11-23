@@ -1,7 +1,16 @@
 const _ = require('lodash');
 
 class AElement {
-  constructor() {
+  constructor(mapProps) {
+    let mp;
+    if (_.isArray(mapProps)) {
+      mp = mapProps.reduce((o, p) => _.set(o, p, true), {});
+    } else if (_.isObject(mapProps)) {
+      mp = mapProps;
+    } else {
+      throw new Error('Wrong arguments');
+    }
+    this.mapProps = mp;
   }
 
   keyProps() {
@@ -9,53 +18,54 @@ class AElement {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  mapProps() {
-    return [];
+
+  static mapChild(mapping, that, p) {
+    const child = that[p];
+    if (that.mapProps[p]) {
+      if (child instanceof AElement) {
+        return [p, child.mapTo(mapping)];
+      }
+      return [p, mapping[child].values()];
+    }
+    return [p, [child].values()];
   }
 
   mapTo(mapping) {
-    const mapChild = (child) => {
-      if (child instanceof AElement) {
-        return child.mapTo(mapping);
-      }
-      return mapping[child].values();
-    };
+    debugger;
+    const mapped = _.keys(this).map(p => AElement.mapChild(mapping, this, p));
+    return AElement.cartesian(mapped);
+  }
 
-    const cartesian = (propList) => {
-      const [first, ...rest] = propList;
-      const [prop, values] = first;
-      if (_.isEmpty(rest)) {
-        return {
-          next() {
-            const n = values.next();
-            if (n.done) return n;
-            n.value = { [prop]: n.value };
-            return n;
-          },
-          [Symbol.iterator]() { return this; },
-        };
-      }
-      let a = values.next();
-      let restIterator = cartesian(rest);
+  static cartesian(propList) {
+    const [first, ...rest] = propList;
+    const [prop, values] = first;
+    if (_.isEmpty(rest)) {
       return {
         next() {
-          if (a.done) return a;
-          const b = restIterator.next();
-          if (b.done) {
-            a = values.next();
-            restIterator = cartesian(rest);
-            return this.next();
-          }
-          b.value[prop] = a.value;
-          return b;
+          const n = values.next();
+          if (n.done) { return n; }
+          n.value = { [prop]: n.value };
+          return n;
         },
         [Symbol.iterator]() { return this; },
       };
+    }
+    let a = values.next();
+    let restIterator = AElement.cartesian(rest);
+    return {
+      next() {
+        if (a.done) { return a; }
+        const b = restIterator.next();
+        if (b.done) {
+          a = values.next();
+          restIterator = AElement.cartesian(rest);
+          return this.next();
+        }
+        b.value[prop] = a.value;
+        return b;
+      },
+      [Symbol.iterator]() { return this; },
     };
-
-    const that = _.clone(this);
-    const mapped = this.mapProps().map(p => [p, mapChild(that[p])]);
-    return cartesian(mapped);
   }
 
   key() {
@@ -69,6 +79,7 @@ class AElement {
     return `${this.keyProps().map(i => keyInternal(i, this)).join(',')}`;
   }
 }
+
 
 class ASet {
   constructor(args) {

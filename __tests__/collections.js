@@ -9,15 +9,15 @@ describe('AElement', () => {
   it('it maps to a new multiple values using a dictionary', () => {
     class Test extends AElement {
       // eslint-disable-next-line class-methods-use-this
-      mapProps() {
-        return ['child1', 'child2'];
+      constructor() {
+        super(['child1', 'child2']);
       }
     }
 
     class Child extends AElement {
       // eslint-disable-next-line class-methods-use-this
-      mapProps() {
-        return ['value1', 'value2'];
+      constructor() {
+        super(['value1', 'value2']);
       }
     }
 
@@ -37,9 +37,9 @@ describe('AElement', () => {
     c2.value2 = 1;
     c2.value3 = 1;
 
-    c2.value1 = 1;
-    c2.value2 = 1;
-    c2.value3 = 1;
+    c3.value1 = 1;
+    c3.value2 = 1;
+    c3.value3 = 1;
 
     const result = [...a.mapTo({ 1: [2, 3] })];
     expect(result).toBe('');
