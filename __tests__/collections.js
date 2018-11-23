@@ -6,20 +6,15 @@ describe('AElement', () => {
     a.test = 'value';
     expect(a.key()).toBe('test:string=value');
   });
-  it('it maps to a new multiple values using a dictionary', () => {
+  it('it maps to an element to multiple values using a dictionary', () => {
     class Test extends AElement {
-      // eslint-disable-next-line class-methods-use-this
-      constructor() {
-        super(['child1', 'child2']);
-      }
     }
+    AElement.setMappedProps(Test, ['child1', 'child2']);
 
     class Child extends AElement {
-      // eslint-disable-next-line class-methods-use-this
-      constructor() {
-        super(['value1', 'value2']);
-      }
     }
+
+    AElement.setMappedProps(Child, ['value1', 'value2']);
 
     const a = new Test();
     const c1 = new Child();
@@ -42,6 +37,279 @@ describe('AElement', () => {
     c3.value3 = 1;
 
     const result = [...a.mapTo({ 1: [2, 3] })];
-    expect(result).toBe('');
+    expect(result).toEqual([
+      {
+        child1: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 2,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 2,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+      {
+        child1: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child2: {
+          value1: 3,
+          value2: 3,
+          value3: 1,
+        },
+        child3: {
+          value1: 1,
+          value2: 1,
+          value3: 1,
+        },
+      },
+    ]);
   });
 });

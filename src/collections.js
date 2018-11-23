@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 class AElement {
-  constructor(mapProps) {
+  static setMappedProps(subType, mapProps) {
     let mp;
     if (_.isArray(mapProps)) {
       mp = mapProps.reduce((o, p) => _.set(o, p, true), {});
@@ -10,7 +10,8 @@ class AElement {
     } else {
       throw new Error('Wrong arguments');
     }
-    this.mapProps = mp;
+    // eslint-disable-next-line no-param-reassign
+    subType.mapProps = mp;
   }
 
   keyProps() {
@@ -21,24 +22,25 @@ class AElement {
 
   static mapChild(mapping, that, p) {
     const child = that[p];
-    if (that.mapProps[p]) {
+    if (that.constructor.mapProps[p]) {
       if (child instanceof AElement) {
-        return [p, child.mapTo(mapping)];
+        return child.mapTo(mapping);
       }
-      return [p, mapping[child].values()];
+      return mapping[child].values();
     }
-    return [p, [child].values()];
+    return [child].values();
   }
 
   mapTo(mapping) {
     debugger;
-    const mapped = _.keys(this).map(p => AElement.mapChild(mapping, this, p));
+    const mapped = _.keys(this).map(p => [p, () => AElement.mapChild(mapping, this, p)]);
     return AElement.cartesian(mapped);
   }
 
   static cartesian(propList) {
     const [first, ...rest] = propList;
-    const [prop, values] = first;
+    const [prop, valuesGenerator] = first;
+    const values = valuesGenerator();
     if (_.isEmpty(rest)) {
       return {
         next() {
@@ -54,7 +56,7 @@ class AElement {
     let restIterator = AElement.cartesian(rest);
     return {
       next() {
-        if (a.done) { return a; }
+        if (a.done) { return { done: true }; }
         const b = restIterator.next();
         if (b.done) {
           a = values.next();
