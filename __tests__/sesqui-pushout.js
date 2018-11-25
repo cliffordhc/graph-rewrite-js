@@ -25,6 +25,52 @@ function graphviz(name, ...r) {
 }
 
 describe('Sesqui-pushout rewriting', () => {
+  it('it deletes edges', () => {
+    const g1 = new Graph([1, 2, 3], [[1, 2], [2, 3]]);
+    const l = new Graph([1, 2, 3], [[1, 2]]);
+    const k = new Graph([1, 2, 3], []);
+    const r = new Graph([1, 2, 3], []);
+    const k2l = { 1: 1, 2: 2, 3: 3 };
+    const k2r = { 1: 1, 2: 2, 3: 3 };
+
+    const l2g = { 1: 1, 2: 2, 3: 3 };
+
+    const sepo1 = new SePO(l, k, r, k2l, k2r);
+    const result1 = sepo1.apply(g1, l2g);
+
+    graphviz('delEdge1', g1, l, k, r, result1);
+
+    const sepo2 = new SePO(l);
+    sepo2.injectRemoveEdge(1, 2);
+    const result2 = sepo2.apply(g1, l2g);
+    graphviz('delEdge2', g1, l, k, r, result2);
+
+    const expected = {
+      edges: [
+        {
+          from: 'r-2',
+          to: 'r-3',
+          attributes: {},
+        },
+      ],
+      nodes: [
+        {
+          id: 'r-1',
+          attributes: {},
+        },
+        {
+          id: 'r-2',
+          attributes: {},
+        },
+        {
+          id: 'r-3',
+          attributes: {},
+        },
+      ],
+    };
+    expect(Graph.toJson(result1)).toEqual(expected);
+    expect(Graph.toJson(result2)).toEqual(expected);
+  });
   it('it deletes outer node', () => {
     const g1 = new Graph([1, 2, 3], [[1, 2], [2, 3]]);
     const l = new Graph([1, 2, 3], []);
@@ -35,32 +81,38 @@ describe('Sesqui-pushout rewriting', () => {
 
     const l2g = { 1: 1, 2: 2, 3: 3 };
 
-    const sepo = new SePO(l, k, r, k2l, k2r);
-    const result = sepo.apply(g1, l2g);
+    const sepo1 = new SePO(l, k, r, k2l, k2r);
+    const result1 = sepo1.apply(g1, l2g);
 
-    graphviz('del1', g1, l, k, r, result);
+    graphviz('del1', g1, l, k, r, result1);
 
-    expect(Graph.toJson(result)).toEqual(
-      {
-        edges: [
-          {
-            from: 'r-1',
-            to: 'r-2',
-            attributes: {},
-          },
-        ],
-        nodes: [
-          {
-            id: 'r-1',
-            attributes: {},
-          },
-          {
-            id: 'r-2',
-            attributes: {},
-          },
-        ],
-      },
-    );
+    const sepo2 = new SePO(l);
+    sepo2.injectRemoveNode(3);
+    const result2 = sepo2.apply(g1, l2g);
+
+    graphviz('del1', g1, l, k, r, result2);
+
+    const expected = {
+      edges: [
+        {
+          from: 'r-1',
+          to: 'r-2',
+          attributes: {},
+        },
+      ],
+      nodes: [
+        {
+          id: 'r-1',
+          attributes: {},
+        },
+        {
+          id: 'r-2',
+          attributes: {},
+        },
+      ],
+    };
+    expect(Graph.toJson(result1)).toEqual(expected);
+    expect(Graph.toJson(result2)).toEqual(expected);
   });
   it('it deletes inner node', () => {
     const g1 = new Graph([1, 2, 3], [[1, 2], [2, 3]]);
@@ -72,44 +124,54 @@ describe('Sesqui-pushout rewriting', () => {
 
     const l2g = { 1: 1, 2: 2, 3: 3 };
 
-    const sepo = new SePO(l, k, r, k2l, k2r);
+    const sepo1 = new SePO(l, k, r, k2l, k2r);
+    const result1 = sepo1.apply(g1, l2g);
 
-    const result = sepo.apply(g1, l2g);
+    graphviz('del2', g1, l, k, r, result1);
 
-    graphviz('del2', g1, l, k, r, result);
+    const sepo2 = new SePO(l);
+    sepo2.injectRemoveNode(2);
+    const result2 = sepo2.apply(g1, l2g);
 
-    expect(Graph.toJson(result)).toEqual(
-      {
-        edges: [],
-        nodes: [
-          {
-            id: 'r-1',
-            attributes: {},
-          },
-          {
-            id: 'r-3',
-            attributes: {},
-          },
-        ],
-      },
-    );
+    graphviz('del2', g1, l, k, r, result2);
+
+    const expected = {
+      edges: [],
+      nodes: [
+        {
+          id: 'r-1',
+          attributes: {},
+        },
+        {
+          id: 'r-3',
+          attributes: {},
+        },
+      ],
+    };
+    expect(Graph.toJson(result1)).toEqual(expected);
+    expect(Graph.toJson(result2)).toEqual(expected);
   });
   it('it clones nodes', () => {
     const g1 = new Graph(['a'], [['a', 'a']]);
     const l = new Graph([1], []);
-    const k = new Graph([1, 2], []);
-    const r = new Graph([1, 2], []);
-    const k2l = { 1: 1, 2: 1 };
-    const k2r = { 1: 1, 2: 2 };
+    const k = new Graph([1, '1c1'], []);
+    const r = new Graph([1, '1c1'], []);
+    const k2l = { 1: 1, '1c1': 1 };
+    const k2r = { 1: 1, '1c1': '1c1' };
 
     const l2g = { 1: 'a' };
 
-    const sepo = new SePO(l, k, r, k2l, k2r);
-    const result = sepo.apply(g1, l2g);
+    const sepo1 = new SePO(l, k, r, k2l, k2r);
+    const result1 = sepo1.apply(g1, l2g);
 
-    graphviz('clone', g1, l, k, r, result);
+    graphviz('clone', g1, l, k, r, result1);
 
-    expect(Graph.toJson(result)).toEqual({
+    const sepo2 = new SePO(l);
+    sepo2.injectCloneNode(1);
+    const result2 = sepo2.apply(g1, l2g);
+    graphviz('clone', g1, l, k, r, result2);
+
+    const expected = {
       edges: [
         {
           from: 'r-1',
@@ -117,18 +179,18 @@ describe('Sesqui-pushout rewriting', () => {
           attributes: {},
         },
         {
-          from: 'r-2',
+          from: 'r-1',
+          to: 'r-1c1',
+          attributes: {},
+        },
+        {
+          from: 'r-1c1',
           to: 'r-1',
           attributes: {},
         },
         {
-          from: 'r-1',
-          to: 'r-2',
-          attributes: {},
-        },
-        {
-          from: 'r-2',
-          to: 'r-2',
+          from: 'r-1c1',
+          to: 'r-1c1',
           attributes: {},
         },
       ],
@@ -138,11 +200,13 @@ describe('Sesqui-pushout rewriting', () => {
           attributes: {},
         },
         {
-          id: 'r-2',
+          id: 'r-1c1',
           attributes: {},
         },
       ],
-    });
+    };
+    expect(Graph.toJson(result1)).toEqual(expected);
+    expect(Graph.toJson(result2)).toEqual(expected);
   });
   it('it adds nodes', () => {
     const g1 = new Graph(['a'], [['a', 'a']]);
@@ -154,12 +218,18 @@ describe('Sesqui-pushout rewriting', () => {
 
     const l2g = { 1: 'a' };
 
-    const sepo = new SePO(l, k, r, k2l, k2r);
-    const result = sepo.apply(g1, l2g);
+    const sepo1 = new SePO(l, k, r, k2l, k2r);
+    const result1 = sepo1.apply(g1, l2g);
 
-    graphviz('add', g1, l, k, r, result);
+    graphviz('add', g1, l, k, r, result1);
 
-    expect(Graph.toJson(result)).toEqual({
+    const sepo2 = new SePO(l);
+    sepo2.injectAddNode(2);
+    const result2 = sepo2.apply(g1, l2g);
+
+    graphviz('add', g1, l, k, r, result2);
+
+    const expected = {
       edges: [
         {
           from: 'r-1',
@@ -177,7 +247,9 @@ describe('Sesqui-pushout rewriting', () => {
           attributes: {},
         },
       ],
-    });
+    };
+    expect(Graph.toJson(result1)).toEqual(expected);
+    expect(Graph.toJson(result2)).toEqual(expected);
   });
   it('it combines nodes', () => {
     const g1 = new Graph(['a', 'b'], [['a', 'b']]);
@@ -189,12 +261,18 @@ describe('Sesqui-pushout rewriting', () => {
 
     const l2g = { 1: 'a', 2: 'b' };
 
-    const sepo = new SePO(l, k, r, k2l, k2r);
-    const result = sepo.apply(g1, l2g);
+    const sepo1 = new SePO(l, k, r, k2l, k2r);
+    const result1 = sepo1.apply(g1, l2g);
 
-    graphviz('add', g1, l, k, r, result);
+    graphviz('add', g1, l, k, r, result1);
 
-    expect(Graph.toJson(result)).toEqual({
+    const sepo2 = new SePO(l);
+    sepo2.injectMergeNodes([1, 2]);
+    const result2 = sepo2.apply(g1, l2g);
+
+    graphviz('add', g1, l, k, r, result2);
+
+    const expected = {
       edges: [
         {
           from: 'r-1_2',
@@ -208,6 +286,8 @@ describe('Sesqui-pushout rewriting', () => {
           attributes: {},
         },
       ],
-    });
+    };
+    expect(Graph.toJson(result1)).toEqual(expected);
+    expect(Graph.toJson(result2)).toEqual(expected);
   });
 });
