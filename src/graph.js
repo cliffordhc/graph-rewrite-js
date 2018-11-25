@@ -4,13 +4,9 @@ const {
   AElement,
 } = require('./collections');
 
-function edgeIndex(f, t) {
-  return `${f}:${typeof f}->${t}:${typeof t}`;
-}
-
 class Vertex extends AElement {
   constructor(id, attributes) {
-    super(['id', 'label'], ['id', 'label']);
+    super();
     this.id = id || -1;
     this.label = '<>';
     this.pred = new ASet();
@@ -18,6 +14,9 @@ class Vertex extends AElement {
     this.attributes = attributes || {};
   }
 }
+
+AElement.setKeyProps(Vertex, ['id', 'label']);
+AElement.setMappedProps(Vertex, ['id', 'label']);
 
 class Edge extends AElement {
   constructor(from, to, attributes) {
@@ -27,6 +26,9 @@ class Edge extends AElement {
     this.attributes = attributes || {};
   }
 }
+
+AElement.setKeyProps(Edge, ['from', 'to']);
+AElement.setMappedProps(Edge, ['from', 'to']);
 
 class Graph {
   constructor(nodes, edges) {
