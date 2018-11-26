@@ -50,21 +50,21 @@ describe('Sesqui-pushout rewriting', () => {
         {
           from: 'r-2',
           to: 'r-3',
-          attributes: {},
+          attrs: {},
         },
       ],
       nodes: [
         {
           id: 'r-1',
-          attributes: {},
+          attrs: {},
         },
         {
           id: 'r-2',
-          attributes: {},
+          attrs: {},
         },
         {
           id: 'r-3',
-          attributes: {},
+          attrs: {},
         },
       ],
     };
@@ -97,17 +97,17 @@ describe('Sesqui-pushout rewriting', () => {
         {
           from: 'r-1',
           to: 'r-2',
-          attributes: {},
+          attrs: {},
         },
       ],
       nodes: [
         {
           id: 'r-1',
-          attributes: {},
+          attrs: {},
         },
         {
           id: 'r-2',
-          attributes: {},
+          attrs: {},
         },
       ],
     };
@@ -140,11 +140,11 @@ describe('Sesqui-pushout rewriting', () => {
       nodes: [
         {
           id: 'r-1',
-          attributes: {},
+          attrs: {},
         },
         {
           id: 'r-3',
-          attributes: {},
+          attrs: {},
         },
       ],
     };
@@ -176,32 +176,32 @@ describe('Sesqui-pushout rewriting', () => {
         {
           from: 'r-1',
           to: 'r-1',
-          attributes: {},
+          attrs: {},
         },
         {
           from: 'r-1',
           to: 'r-1c1',
-          attributes: {},
+          attrs: {},
         },
         {
           from: 'r-1c1',
           to: 'r-1',
-          attributes: {},
+          attrs: {},
         },
         {
           from: 'r-1c1',
           to: 'r-1c1',
-          attributes: {},
+          attrs: {},
         },
       ],
       nodes: [
         {
           id: 'r-1',
-          attributes: {},
+          attrs: {},
         },
         {
           id: 'r-1c1',
-          attributes: {},
+          attrs: {},
         },
       ],
     };
@@ -234,17 +234,17 @@ describe('Sesqui-pushout rewriting', () => {
         {
           from: 'r-1',
           to: 'r-1',
-          attributes: {},
+          attrs: {},
         },
       ],
       nodes: [
         {
           id: 'r-1',
-          attributes: {},
+          attrs: {},
         },
         {
           id: 'r-2',
-          attributes: {},
+          attrs: {},
         },
       ],
     };
@@ -277,13 +277,13 @@ describe('Sesqui-pushout rewriting', () => {
         {
           from: 'r-1_2',
           to: 'r-1_2',
-          attributes: {},
+          attrs: {},
         },
       ],
       nodes: [
         {
           id: 'r-1_2',
-          attributes: {},
+          attrs: {},
         },
       ],
     };

@@ -6,7 +6,7 @@ describe('Collections', () => {
     it('has a unique key', () => {
       class Test extends AElement {
       }
-      AElement.setKeyProps(Test, ['test']);
+      ASet.setKeyProps(Test, ['test']);
       const a = new Test();
       a.test = 'value';
       expect(a.key()).toBe('test:string=value');
@@ -14,14 +14,14 @@ describe('Collections', () => {
     it('maps to multiple values using a dictionary', () => {
       class Test extends AElement {
       }
-      AElement.setMappedProps(Test, ['child1', 'child2']);
-      AElement.setKeyProps(Test, ['child1', 'child2']);
+      ASet.setMappedProps(Test, ['child1', 'child2']);
+      ASet.setKeyProps(Test, ['child1', 'child2']);
 
       class Child extends AElement {
       }
 
-      AElement.setMappedProps(Child, ['value1', 'value2']);
-      AElement.setKeyProps(Child, ['value1', 'value2']);
+      ASet.setMappedProps(Child, ['value1', 'value2']);
+      ASet.setKeyProps(Child, ['value1', 'value2']);
 
       const a = new Test();
       const c1 = new Child();
@@ -73,14 +73,136 @@ describe('Collections', () => {
       });
       expect(result).toEqual(expected);
     });
+    it('merges attributes', () => {
+      const a = new AElement();
+      a.mergeAttrs({ name: 'n1' });
+      a.mergeAttrs([{ name: 'n2' }, { name: 'n3' }]);
+      a.mergeAttrs({ cell: 'c1' });
+      a.mergeAttrs([{ cell: 'c2' }, { cell: 'c3' }]);
+      a.mergeAttrs([{ cell: 'c4' }, { name: 'n4' }]);
+      a.mergeAttrs([{ cell: 'c5', name: 'n5' }]);
+      expect(a.attrs).toEqual({
+        cell: new Set([
+          'c1',
+          'c2',
+          'c3',
+          'c4',
+          'c5',
+        ]),
+        name: new Set([
+          'n1',
+          'n2',
+          'n3',
+          'n4',
+          'n5',
+        ]),
+      });
+    });
+    it('removes attributes', () => {
+      const attrs = {
+        cell: new Set([
+          'c1',
+          'c2',
+          'c3',
+          'c4',
+        ]),
+        name: new Set([
+          'n1',
+          'n2',
+          'n3',
+          'n4',
+        ]),
+      };
+      const a = new AElement();
+      a.mergeAttrs(attrs);
+      a.removeAttrs({ name: 'n3' });
+      a.removeAttrs([{ cell: 'c3' }, { name: 'n2' }]);
+
+      expect(a.attrs).toEqual({
+        cell: new Set([
+          'c1',
+          'c2',
+          'c4',
+        ]),
+        name: new Set([
+          'n1',
+          'n4',
+        ]),
+      });
+
+      const b = new AElement();
+      b.mergeAttrs(attrs);
+      b.removeAttrs({ name: 'n3', cell: 'c3' });
+      expect(b.attrs).toEqual({
+        cell: new Set([
+          'c1',
+          'c2',
+          'c4',
+        ]),
+        name: new Set([
+          'n1',
+          'n2',
+          'n4',
+        ]),
+      });
+    });
+    it('checks for compatibility of attributes', () => {
+      const a = new AElement();
+      a.mergeAttrs({
+        cell: new Set([
+          'c1',
+          'c2',
+          'c3',
+          'c4',
+        ]),
+        phone: new Set([
+          'p1',
+          'p2',
+          'p3',
+          'p4',
+        ]),
+        name: new Set([
+          'n1',
+          'n2',
+          'n3',
+          'n4',
+        ]),
+      });
+
+      const b = new AElement();
+      b.mergeAttrs({
+        cell: new Set([
+          'c1',
+          'c2',
+        ]),
+        name: new Set([
+          'n1',
+        ]),
+      });
+      const c = new AElement();
+      c.mergeAttrs({
+        cell: new Set([
+          'c1',
+          'c2',
+          'c6',
+        ]),
+        name: new Set([
+          'n1',
+        ]),
+      });
+
+      expect(b.compatible(a)).toBeTruthy();
+      expect(c.compatible(a)).toBeFalsy();
+      expect(a.compatible(b)).toBeFalsy();
+    });
   });
   describe('it has an ASet that', () => {
     it('applies a mapping to its contents', () => {
       class Child extends AElement {
       }
 
-      AElement.setMappedProps(Child, ['value1', 'value2']);
-      AElement.setKeyProps(Child, ['value1', 'value2']);
+      ASet.setMappedProps(Child, ['value1', 'value2']);
+      ASet.setKeyProps(Child, ['value1', 'value2']);
       const c1 = new Child();
       const c2 = new Child();
       const c3 = new Child();
@@ -114,14 +236,14 @@ describe('Collections', () => {
         }
       }
 
-      AElement.setMappedProps(Group, ['child1', 'child1']);
-      AElement.setKeyProps(Group, ['child1', 'child1']);
+      ASet.setMappedProps(Group, ['child1', 'child1']);
+      ASet.setKeyProps(Group, ['child1', 'child1']);
 
       class Child extends AElement {
       }
 
-      AElement.setMappedProps(Child, ['name']);
-      AElement.setKeyProps(Child, ['name']);
+      ASet.setMappedProps(Child, ['name']);
+      ASet.setKeyProps(Child, ['name']);
       const c1 = new Child();
       const c2 = new Child();
 

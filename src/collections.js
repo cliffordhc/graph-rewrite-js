@@ -27,23 +27,15 @@ function cartesian(propList, handler) {
   };
 }
 
-class AElement {
-  static setMappedProps(subType, mapProps) {
-    if (_.isArray(mapProps)) {
-      // eslint-disable-next-line no-param-reassign
-      subType.mapProps = mapProps;
-    } else {
-      throw new Error('Wrong arguments');
-    }
+class AExp {
+  static eval() {
+    return false;
   }
+}
 
-  static setKeyProps(subType, keyProps) {
-    if (_.isArray(keyProps)) {
-      // eslint-disable-next-line no-param-reassign
-      subType.keyProps = keyProps;
-    } else {
-      throw new Error('Wrong arguments');
-    }
+class AElement {
+  constructor() {
+    this.attrs = {};
   }
 
   static mapChild(mapping, child) {
@@ -51,6 +43,55 @@ class AElement {
       return child.mapTo(mapping);
     }
     return mapping(child);
+  }
+
+  mergeAttrs(attrsList) {
+    // eslint-disable-next-line no-use-before-define
+    const attrsListBoxed = ASet.isIterable(attrsList)
+      ? attrsList
+      : [attrsList];
+
+    attrsListBoxed.forEach((attrs) => {
+      _.forOwn(attrs, (value, key) => {
+        // eslint-disable-next-line no-use-before-define
+        const valList = ASet.isIterable(value)
+          ? value
+          : [value];
+        if (this.attrs[key]) {
+          this.attrs[key] = new Set([...this.attrs[key], ...valList]);
+        } else {
+          this.attrs[key] = new Set([...valList]);
+        }
+      });
+    });
+  }
+
+  removeAttrs(attrsList) {
+    // eslint-disable-next-line no-use-before-define
+    const attrsListBoxed = ASet.isIterable(attrsList)
+      ? attrsList
+      : [attrsList];
+
+    attrsListBoxed.forEach((attrs) => {
+      _.forOwn(attrs, (value, key) => {
+        // eslint-disable-next-line no-use-before-define
+        const valList = ASet.isIterable(value)
+          ? value
+          : [value];
+
+        if (this.attrs[key]) {
+          [...valList].forEach(v => this.attrs[key].delete(v));
+        }
+      });
+    });
+  }
+
+  compatible(node) {
+    return _.entries(this.attrs).every(
+      ([key, value]) => [...value].every(
+        v => (v instanceof AExp ? AExp.eval(v, node.attrs[key]) : node.attrs[key].has(v)),
+      ),
+    );
   }
 
   mapTo(mapping) {
@@ -77,12 +118,6 @@ class AElement {
     });
   }
 
-  static finalCartesian(that, prop, n) {
-    const that2 = _.clone(that);
-    that2[prop] = n.value;
-    return that2;
-  }
-
   key() {
     const keyInternal = (i, that) => {
       const prop = that[i];
@@ -95,7 +130,6 @@ class AElement {
   }
 }
 
-
 class ASet {
   constructor(args) {
     let items = args;
@@ -103,7 +137,7 @@ class ASet {
       if (items instanceof AElement) {
         items = [args.key(), args];
       }
-      if (typeof items[Symbol.iterator] === 'function') {
+      if (ASet.isIterable(items)) {
         items = [...items].map((v) => {
           if (v instanceof AElement) {
             return [v.key(), v];
@@ -117,6 +151,24 @@ class ASet {
     }
     this.pMap = items ? new Map(items) : new Map();
     this[Symbol.iterator] = this.values;
+  }
+
+  static setMappedProps(subType, mapProps) {
+    if (_.isArray(mapProps)) {
+      // eslint-disable-next-line no-param-reassign
+      subType.mapProps = mapProps;
+    } else {
+      throw new Error('Wrong arguments');
+    }
+  }
+
+  static setKeyProps(subType, keyProps) {
+    if (_.isArray(keyProps)) {
+      // eslint-disable-next-line no-param-reassign
+      subType.keyProps = keyProps;
+    } else {
+      throw new Error('Wrong arguments');
+    }
   }
 
   static computeMapping(mapping, to, from, allowAll) {
@@ -220,7 +272,7 @@ class ASet {
     } else {
       iterable = values;
     }
-    if (typeof iterable[Symbol.iterator] === 'function') {
+    if (ASet.isIterable(iterable)) {
       return iterable[Symbol.iterator]();
     }
     throw new Error('Wrong arguments');
@@ -301,7 +353,7 @@ class ASet {
   static im(a) {
     if (a instanceof AElement) {
       return a;
-    } if (typeof a[Symbol.iterator] === 'function') {
+    } if (ASet.isIterable(a)) {
       const values = [...a];
       return values.length === 1 ? values[0] : values;
     }
@@ -380,7 +432,7 @@ class ASet {
   }
 
   static isIterable(obj) {
-    if (obj == null) {
+    if (obj == null || !_.isObject(obj)) {
       return false;
     }
     return typeof obj[Symbol.iterator] === 'function';

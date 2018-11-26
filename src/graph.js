@@ -5,30 +5,30 @@ const {
 } = require('./collections');
 
 class Vertex extends AElement {
-  constructor(id, attributes) {
+  constructor(id, attrs) {
     super();
     this.id = id || -1;
     this.label = '<>';
     this.pred = new ASet();
     this.succ = new ASet();
-    this.attributes = attributes || {};
+    this.attrs = attrs || {};
   }
 }
 
-AElement.setKeyProps(Vertex, ['id', 'label']);
-AElement.setMappedProps(Vertex, ['id', 'label']);
+ASet.setKeyProps(Vertex, ['id', 'label']);
+ASet.setMappedProps(Vertex, ['id', 'label']);
 
 class Edge extends AElement {
-  constructor(from, to, attributes) {
+  constructor(from, to, attrs) {
     super(['from', 'to'], ['from', 'to']);
     this.from = from || -1;
     this.to = to || -1;
-    this.attributes = attributes || {};
+    this.attrs = attrs || {};
   }
 }
 
-AElement.setKeyProps(Edge, ['from', 'to']);
-AElement.setMappedProps(Edge, ['from', 'to']);
+ASet.setKeyProps(Edge, ['from', 'to']);
+ASet.setMappedProps(Edge, ['from', 'to']);
 
 class Graph {
   constructor(nodes, edges) {
@@ -50,15 +50,15 @@ class Graph {
 
   static fromJson(json) {
     return new Graph(
-      json.nodes.map(n => [n.id, n.attributes]),
-      json.edges.map(e => ([e.from, e.to, e.attributes])),
+      json.nodes.map(n => [n.id, n.attrs]),
+      json.edges.map(e => ([e.from, e.to, e.attrs])),
     );
   }
 
   static toJson(graph) {
-    const nodes = [...graph.nodes()].map(n => ({ id: n.id, attributes: n.attributes }));
+    const nodes = [...graph.nodes()].map(n => ({ id: n.id, attrs: n.attrs }));
     const edges = [...graph.edges()].map(e => ({
-      from: e.from.id, to: e.to.id, attributes: e.attributes,
+      from: e.from.id, to: e.to.id, attrs: e.attrs,
     }));
     const jsonObj = { nodes, edges };
     return jsonObj;
