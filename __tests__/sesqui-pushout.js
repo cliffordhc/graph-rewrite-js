@@ -295,8 +295,8 @@ describe('Sesqui-pushout rewriting', () => {
     const l = new Graph([1, 2], []);
     const l2g = { 1: 'a', 2: 'b' };
     const sepo = new SePO(l);
-    sepo.injectRemoveNodeAttr(1, { name: 'n1' });
-    sepo.injectRemoveNodeAttr(2, { cell: 'c2' });
+    sepo.injectRemoveNodeAttrs(1, { name: 'n1' });
+    sepo.injectRemoveNodeAttrs(2, { cell: 'c2' });
     const result = sepo.apply(g1, l2g);
 
     const expected = {
@@ -325,8 +325,8 @@ describe('Sesqui-pushout rewriting', () => {
     const l = new Graph([1, 2], []);
     const l2g = { 1: 'a', 2: 'b' };
     const sepo = new SePO(l);
-    sepo.injectAddNodeAttr(1, { name: 'n1' });
-    sepo.injectAddNodeAttr(2, { cell: 'c2' });
+    sepo.injectAddNodeAttrs(1, { name: 'n1' });
+    sepo.injectAddNodeAttrs(2, { cell: 'c2' });
     const result = sepo.apply(g1, l2g);
 
     const expected = {
@@ -355,8 +355,8 @@ describe('Sesqui-pushout rewriting', () => {
     const l = new Graph([1, 2, 3], [[1, 2], [2, 3]]);
     const l2g = { 1: 'a', 2: 'b', 3: 'c' };
     const sepo = new SePO(l);
-    sepo.injectRemoveEdgeAttr(1, 2, { name: 'n1' });
-    sepo.injectRemoveEdgeAttr(2, 3, { cell: 'c2' });
+    sepo.injectRemoveEdgeAttrs(1, 2, { name: 'n1' });
+    sepo.injectRemoveEdgeAttrs(2, 3, { cell: 'c2' });
     const result = sepo.apply(g1, l2g);
 
     const expected = {
@@ -394,8 +394,8 @@ describe('Sesqui-pushout rewriting', () => {
     const l = new Graph([1, 2, 3], [[1, 2], [2, 3]]);
     const l2g = { 1: 'a', 2: 'b', 3: 'c' };
     const sepo = new SePO(l);
-    sepo.injectAddEdgeAttr(1, 2, { name: 'n1' });
-    sepo.injectAddEdgeAttr(2, 3, { cell: 'c2' });
+    sepo.injectAddEdgeAttrs(1, 2, { name: 'n1' });
+    sepo.injectAddEdgeAttrs(2, 3, { cell: 'c2' });
     debugger
     const result = sepo.apply(g1, l2g);
 

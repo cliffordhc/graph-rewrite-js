@@ -49,13 +49,11 @@ class Graph {
   static defaultCompatibility(g1, g2) {
     return {
       node(node1, node2) {
-        debugger
         const n1 = g1.nodeById(node1);
         const n2 = g2.nodeById(node2);
         return n2.compatible(n1);
       },
       edge(from1, to1, from2, to2) {
-        debugger
         const e1 = g1.edgeByIds(from1, to1);
         const e2 = g2.edgeByIds(from2, to2);
         return e2.compatible(e1);

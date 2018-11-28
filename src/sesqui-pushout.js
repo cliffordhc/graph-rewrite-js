@@ -100,7 +100,7 @@ class SePO {
     nodes.forEach((n) => { this.kToRhs[n] = [id]; });
   }
 
-  injectRemoveNodeAttr(node, attrs) {
+  injectRemoveNodeAttrs(node, attrs) {
     this.k.nodeById(node).remove(attrs);
     this.kToRhs[node].forEach((rhsNode) => {
       this.rhs.nodeById(rhsNode).remove(attrs);
@@ -110,13 +110,13 @@ class SePO {
     });
   }
 
-  injectAddNodeAttr(node, attrs) {
+  injectAddNodeAttrs(node, attrs) {
     this.kToRhs[node].forEach((rhsNode) => {
       this.rhs.nodeById(rhsNode).merge(attrs);
     });
   }
 
-  injectRemoveEdgeAttr(from, to, attrs) {
+  injectRemoveEdgeAttrs(from, to, attrs) {
     this.k.edgeByIds(from, to).remove(attrs);
     this.kToRhs[from].forEach((fromRhsNode) => {
       this.kToRhs[to].forEach((toRhsNode) => {
@@ -132,7 +132,7 @@ class SePO {
     });
   }
 
-  injectAddEdgeAttr(from, to, attrs) {
+  injectAddEdgeAttrs(from, to, attrs) {
     this.kToRhs[from].forEach((fromRhsNode) => {
       this.kToRhs[to].forEach((toRhsNode) => {
         const edge = this.rhs.edgeByIds(fromRhsNode, toRhsNode);
