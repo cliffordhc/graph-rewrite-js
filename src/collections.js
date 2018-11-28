@@ -34,8 +34,19 @@ class AExp {
 }
 
 class AElement {
-  constructor() {
+  constructor(attrs) {
     this.attrs = {};
+    if (attrs) {
+      this.merge(attrs);
+    }
+  }
+
+  merge(attrs) {
+    this.attrs = AElement.mergeAttrs(this.attrs, attrs);
+  }
+
+  remove(attrs) {
+    this.attrs = AElement.removeAttrs(this.attrs, attrs);
   }
 
   static mapChild(mapping, child) {
@@ -45,51 +56,61 @@ class AElement {
     return mapping(child);
   }
 
-  mergeAttrs(attrsList) {
-    // eslint-disable-next-line no-use-before-define
-    const attrsListBoxed = ASet.isIterable(attrsList)
-      ? attrsList
-      : [attrsList];
-
-    attrsListBoxed.forEach((attrs) => {
-      _.forOwn(attrs, (value, key) => {
-        // eslint-disable-next-line no-use-before-define
-        const valList = ASet.isIterable(value)
-          ? value
-          : [value];
-        if (this.attrs[key]) {
-          this.attrs[key] = new Set([...this.attrs[key], ...valList]);
-        } else {
-          this.attrs[key] = new Set([...valList]);
-        }
-      });
-    });
+  static normalizeAttrs(attrsList) {
+    const nomalizeArray = arr => arr.reduce(
+      (acc, values) => _.entries(values).reduce(
+        (acc2, [k, v]) => _.set(acc2, k, acc2[k] ? new Set([v, ...acc2[k]]) : new Set([v])),
+        acc,
+      ),
+      {},
+    );
+    if (_.isArray(attrsList)) {
+      if (attrsList.every(a => _.isPlainObject(a))) {
+        return nomalizeArray(attrsList);
+      }
+    }
+    if (_.isPlainObject(attrsList)) {
+      if (_.values(attrsList).every(a => a instanceof Set)) {
+        return _.cloneDeep(attrsList);
+      }
+      return nomalizeArray([attrsList]);
+    }
+    throw new Error('Wrong arguments');
   }
 
-  removeAttrs(attrsList) {
-    // eslint-disable-next-line no-use-before-define
-    const attrsListBoxed = ASet.isIterable(attrsList)
-      ? attrsList
-      : [attrsList];
-
-    attrsListBoxed.forEach((attrs) => {
-      _.forOwn(attrs, (value, key) => {
-        // eslint-disable-next-line no-use-before-define
-        const valList = ASet.isIterable(value)
-          ? value
-          : [value];
-
-        if (this.attrs[key]) {
-          [...valList].forEach(v => this.attrs[key].delete(v));
-        }
-      });
+  static mergeAttrs(...attrsLists) {
+    const normalizedAttrsLists = attrsLists.map(AElement.normalizeAttrs);
+    const keys = new Set(_.flatMap(normalizedAttrsLists, _.keys));
+    const result = {};
+    [...keys].forEach((key) => {
+      result[key] = new Set(
+        _.flatMap(normalizedAttrsLists, al => (al[key] ? [...al[key]] : [])),
+      );
     });
+    return result;
+  }
+
+  static removeAttrs(attrsList1, attrsList2) {
+    const normalizedAttrsList1 = attrsList1 ? AElement.normalizeAttrs(attrsList1) : {};
+    const normalizedAttrsList2 = attrsList2 ? AElement.normalizeAttrs(attrsList2) : {};
+
+    _.forOwn(normalizedAttrsList2, (value, key) => {
+      if (normalizedAttrsList1[key]) {
+        [...value].forEach((v) => {
+          normalizedAttrsList1[key].delete(v);
+          if (normalizedAttrsList1[key].size === 0) delete normalizedAttrsList1[key];
+        });
+      }
+    });
+    return normalizedAttrsList1;
   }
 
   compatible(node) {
     return _.entries(this.attrs).every(
       ([key, value]) => [...value].every(
-        v => (v instanceof AExp ? AExp.eval(v, node.attrs[key]) : node.attrs[key].has(v)),
+        v => (v instanceof AExp
+          ? AExp.eval(v, node.attrs[key])
+          : node.attrs[key] && node.attrs[key].has(v)),
       ),
     );
   }
@@ -171,7 +192,7 @@ class ASet {
     }
   }
 
-  static computeMapping(mapping, to, from, allowAll) {
+  static generateMapping(mapping, to, from, allowAll) {
     let frm = from;
     let all = allowAll;
     if (!frm) {
@@ -183,8 +204,8 @@ class ASet {
     }
     if (_.isFunction(mapping)) {
       return val => (val === frm ? [to] : mapping(val));
-    } if (_.isObject(mapping)) {
-      const map = _.mapValues(mapping, v => (_.isArray(v) ? v : [v]));
+    } if (_.isPlainObject(mapping)) {
+      const map = _.cloneDeep(mapping);
       map[frm] = [to];
       if (all) {
         return val => (_.has(map, val) ? map[val] : val);
@@ -193,31 +214,36 @@ class ASet {
         if (_.has(map, val)) {
           return map[val];
         }
-        try {
-          throw new Error('Missing mapping');
-        } catch (err) {
-          throw err;
-        }
+        throw new Error('Missing mapping');
       };
     }
     throw new Error('Wrong arguments');
   }
 
-  static computeCombined(...mappings) {
-    if (mappings && mappings.reduce((a, m) => a && _.isObject(m), true)) {
+  static normalizeMap(...mappings) {
+    if (mappings && mappings.every(m => _.isPlainObject(m))) {
       const values = _.keys(_.first(mappings));
-      const combined = values.reduce(
-        (o, initial) => _.set(o, initial, mappings.reduce((v, map) => map[v], initial)),
+      const normalized = values.reduce(
+        (o, initial) => _.set(o, initial, mappings.reduce(
+          (v, map) => (_.isArray(v) ? _.flatMap(v, v2 => map[v2]) : _.flatten([map[v]])),
+          initial,
+        )),
         {},
       );
-      return combined;
+      return normalized;
     }
     return {};
   }
 
-  static computeInverse(map, to, from) {
-    const invertedMap = _.mapValues(_.invertBy(map), v => v.map(v2 => map[v2]));
-    return ASet.computeMapping(invertedMap, to, from);
+  static computeInverse(map) {
+    const num = k => (_.isNaN(+k) ? k : _.toSafeInteger(k));
+    return _.keys(map).reduce(
+      (acc, k) => map[k].reduce(
+        (acc2, v) => _.set(acc2, v, acc2[v] ? acc2[v].concat(num(k)) : [num(k)]),
+        acc,
+      ),
+      {},
+    );
   }
 
   inspect() {

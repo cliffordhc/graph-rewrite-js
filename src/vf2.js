@@ -84,8 +84,8 @@ class Vf2 {
   verifyNode(n1, n2) {
     if (this.clientVerify) {
       return this.clientVerify.node(
-        this.g1.rMap(n1),
-        this.g2.rMap(n2),
+        this.g1.rMap.get(n1),
+        this.g2.rMap.get(n2),
       );
     }
     return true;
@@ -94,8 +94,10 @@ class Vf2 {
   verifyEdge(fn1, tn1, fn2, tn2) {
     if (this.clientVerify) {
       return this.clientVerify.edge(
-        this.g1.rMap(fn1, tn1),
-        this.g2.rMap(fn2, tn2),
+        this.g1.rMap.get(fn1),
+        this.g1.rMap.get(tn1),
+        this.g2.rMap.get(fn2),
+        this.g2.rMap.get(tn2),
       );
     }
     return true;
@@ -103,19 +105,17 @@ class Vf2 {
 
   feasibilityFunction(s, n1, n2) {
     let verified = true;
-    verified = verified && this.verifyNode(n1, n2);
-    verified = verified && this.verifySucc(n1, n2);
-    verified = verified && this.verifyPred(n1, n2);
-
     // Check counts
-    if (
-      !verified
-      && s.cIn1 >= s.cIn2
-      && s.cOut1 >= s.cOut2
-      && this.g1.nodeCount() - s.depth - s.cIn1 - s.cOut1
-      >= this.g2.nodeCount() - s.depth - s.cIn2 - s.cOut2
+    if (s.cIn1 < s.cIn2
+      || s.cOut1 < s.cOut2
+      || this.g1.nodeCount() - s.depth - s.cIn1 - s.cOut1
+      < this.g2.nodeCount() - s.depth - s.cIn2 - s.cOut2
     ) {
-      verified = true;
+      verified = false;
+    } else {
+      verified = verified && this.verifyNode(n1, n2);
+      verified = verified && this.verifySucc(n1, n2);
+      verified = verified && this.verifyPred(n1, n2);
     }
     return verified;
   }

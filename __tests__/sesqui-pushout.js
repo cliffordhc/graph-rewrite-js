@@ -214,7 +214,7 @@ describe('Sesqui-pushout rewriting', () => {
     const k = new Graph([1], []);
     const r = new Graph([1, 2], []);
     const k2l = { 1: 1 };
-    const k2r = { 1: 1, 2: 2 };
+    const k2r = { 1: 1 };
 
     const l2g = { 1: 'a' };
 
@@ -289,5 +289,144 @@ describe('Sesqui-pushout rewriting', () => {
     };
     expect(Graph.toJson(result1)).toEqual(expected);
     expect(Graph.toJson(result2)).toEqual(expected);
+  });
+  it('it removes node attributes', () => {
+    const g1 = new Graph([['a', { name: 'n1', cell: 'c1' }], ['b', { cell: 'c2' }]], [['a', 'b']]);
+    const l = new Graph([1, 2], []);
+    const l2g = { 1: 'a', 2: 'b' };
+    const sepo = new SePO(l);
+    sepo.injectRemoveNodeAttr(1, { name: 'n1' });
+    sepo.injectRemoveNodeAttr(2, { cell: 'c2' });
+    const result = sepo.apply(g1, l2g);
+
+    const expected = {
+      edges: [
+        {
+          from: 'r-1',
+          to: 'r-2',
+          attrs: {},
+        },
+      ],
+      nodes: [
+        {
+          id: 'r-1',
+          attrs: { cell: new Set(['c1']) },
+        },
+        {
+          id: 'r-2',
+          attrs: {},
+        },
+      ],
+    };
+    expect(Graph.toJson(result)).toEqual(expected);
+  });
+  it('it adds node attributes', () => {
+    const g1 = new Graph([['a', { cell: 'c1' }], 'b'], [['a', 'b']]);
+    const l = new Graph([1, 2], []);
+    const l2g = { 1: 'a', 2: 'b' };
+    const sepo = new SePO(l);
+    sepo.injectAddNodeAttr(1, { name: 'n1' });
+    sepo.injectAddNodeAttr(2, { cell: 'c2' });
+    const result = sepo.apply(g1, l2g);
+
+    const expected = {
+      edges: [
+        {
+          from: 'r-1',
+          to: 'r-2',
+          attrs: {},
+        },
+      ],
+      nodes: [
+        {
+          id: 'r-1',
+          attrs: { name: new Set(['n1']), cell: new Set(['c1']) },
+        },
+        {
+          id: 'r-2',
+          attrs: { cell: new Set(['c2']) },
+        },
+      ],
+    };
+    expect(Graph.toJson(result)).toEqual(expected);
+  });
+  it('it removes edge attributes', () => {
+    const g1 = new Graph(['a', 'b', 'c'], [['a', 'b', { name: 'n1', cell: 'c1' }], ['b', 'c', { cell: 'c2' }]]);
+    const l = new Graph([1, 2, 3], [[1, 2], [2, 3]]);
+    const l2g = { 1: 'a', 2: 'b', 3: 'c' };
+    const sepo = new SePO(l);
+    sepo.injectRemoveEdgeAttr(1, 2, { name: 'n1' });
+    sepo.injectRemoveEdgeAttr(2, 3, { cell: 'c2' });
+    const result = sepo.apply(g1, l2g);
+
+    const expected = {
+      edges: [
+        {
+          from: 'r-1',
+          to: 'r-2',
+          attrs: { cell: new Set(['c1']) },
+        },
+        {
+          from: 'r-2',
+          to: 'r-3',
+          attrs: {},
+        },
+      ],
+      nodes: [
+        {
+          id: 'r-1',
+          attrs: {},
+        },
+        {
+          id: 'r-2',
+          attrs: {},
+        },
+        {
+          id: 'r-3',
+          attrs: {},
+        },
+      ],
+    };
+    expect(Graph.toJson(result)).toEqual(expected);
+  });
+  it('it adds edge attributes', () => {
+    const g1 = new Graph(['a', 'b', 'c'], [['a', 'b', { cell: 'c1' }], ['b', 'c']]);
+    const l = new Graph([1, 2, 3], [[1, 2], [2, 3]]);
+    const l2g = { 1: 'a', 2: 'b', 3: 'c' };
+    const sepo = new SePO(l);
+    sepo.injectAddEdgeAttr(1, 2, { name: 'n1' });
+    sepo.injectAddEdgeAttr(2, 3, { cell: 'c2' });
+    debugger
+    const result = sepo.apply(g1, l2g);
+
+    const expected = {
+      edges: [
+        {
+          from: 'r-1',
+          to: 'r-2',
+          attrs: { name: new Set(['n1']), cell: new Set(['c1']) },
+        },
+        {
+          from: 'r-2',
+          to: 'r-3',
+          attrs: { cell: new Set(['c2']) },
+        },
+      ],
+      nodes: [
+        {
+          id: 'r-1',
+          attrs: {},
+        },
+        {
+          id: 'r-2',
+          attrs: {},
+        },
+        {
+          id: 'r-3',
+          attrs: {},
+        },
+      ],
+    };
+    expect(Graph.toJson(result)).toEqual(expected);
   });
 });

@@ -6,12 +6,11 @@ const {
 
 class Vertex extends AElement {
   constructor(id, attrs) {
-    super();
+    super(attrs);
     this.id = id || -1;
     this.label = '<>';
     this.pred = new ASet();
     this.succ = new ASet();
-    this.attrs = attrs || {};
   }
 }
 
@@ -20,10 +19,9 @@ ASet.setMappedProps(Vertex, ['id', 'label']);
 
 class Edge extends AElement {
   constructor(from, to, attrs) {
-    super(['from', 'to'], ['from', 'to']);
+    super(attrs);
     this.from = from || -1;
     this.to = to || -1;
-    this.attrs = attrs || {};
   }
 }
 
@@ -43,9 +41,26 @@ class Graph {
       edges2.forEach((e) => {
         const f = this.node(new Vertex(e[0]));
         const t = this.node(new Vertex(e[1]));
-        this.addEdge(new Edge(f, t, ...e.slice(2)));
+        this.addEdge(new Edge(f, t, e[2]));
       });
     }
+  }
+
+  static defaultCompatibility(g1, g2) {
+    return {
+      node(node1, node2) {
+        debugger
+        const n1 = g1.nodeById(node1);
+        const n2 = g2.nodeById(node2);
+        return n2.compatible(n1);
+      },
+      edge(from1, to1, from2, to2) {
+        debugger
+        const e1 = g1.edgeByIds(from1, to1);
+        const e2 = g2.edgeByIds(from2, to2);
+        return e2.compatible(e1);
+      },
+    };
   }
 
   static fromJson(json) {
@@ -133,8 +148,7 @@ class Graph {
 
   edgeByIds(f, t) {
     const newEdge = new Edge(this.nodeById(f), this.nodeById(t));
-    this.edge(newEdge);
-    return newEdge;
+    return this.edge(newEdge);
   }
 
   edges() {

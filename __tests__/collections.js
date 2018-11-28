@@ -43,7 +43,7 @@ describe('Collections', () => {
       c3.value2 = 1;
       c3.value3 = 1;
 
-      const mapping = ASet.computeMapping({ 1: [2, 3] });
+      const mapping = ASet.generateMapping({ 1: [2, 3] });
       const result = [...a.mapTo(mapping)];
       expect(result.reduce((acc, r) => acc && r instanceof AElement, true)).toBeTruthy();
 
@@ -75,12 +75,12 @@ describe('Collections', () => {
     });
     it('merges attributes', () => {
       const a = new AElement();
-      a.mergeAttrs({ name: 'n1' });
-      a.mergeAttrs([{ name: 'n2' }, { name: 'n3' }]);
-      a.mergeAttrs({ cell: 'c1' });
-      a.mergeAttrs([{ cell: 'c2' }, { cell: 'c3' }]);
-      a.mergeAttrs([{ cell: 'c4' }, { name: 'n4' }]);
-      a.mergeAttrs([{ cell: 'c5', name: 'n5' }]);
+      a.merge({ name: 'n1' });
+      a.merge([{ name: 'n2' }, { name: 'n3' }]);
+      a.merge({ cell: 'c1' });
+      a.merge([{ cell: 'c2' }, { cell: 'c3' }]);
+      a.merge([{ cell: 'c4' }, { name: 'n4' }]);
+      a.merge([{ cell: 'c5', name: 'n5' }, { phone: 'p1' }]);
       expect(a.attrs).toEqual({
         cell: new Set([
           'c1',
@@ -95,6 +95,9 @@ describe('Collections', () => {
           'n3',
           'n4',
           'n5',
+        ]),
+        phone: new Set([
+          'p1',
         ]),
       });
     });
@@ -114,9 +117,9 @@ describe('Collections', () => {
         ]),
       };
       const a = new AElement();
-      a.mergeAttrs(attrs);
-      a.removeAttrs({ name: 'n3' });
-      a.removeAttrs([{ cell: 'c3' }, { name: 'n2' }]);
+      a.merge(attrs);
+      a.remove({ name: 'n3' });
+      a.remove([{ cell: 'c3' }, { name: 'n2' }]);
 
       expect(a.attrs).toEqual({
         cell: new Set([
@@ -131,8 +134,8 @@ describe('Collections', () => {
       });
 
       const b = new AElement();
-      b.mergeAttrs(attrs);
-      b.removeAttrs({ name: 'n3', cell: 'c3' });
+      b.merge(attrs);
+      b.remove({ name: 'n3', cell: 'c3' });
       expect(b.attrs).toEqual({
         cell: new Set([
           'c1',
@@ -148,7 +151,7 @@ describe('Collections', () => {
     });
     it('checks for compatibility of attributes', () => {
       const a = new AElement();
-      a.mergeAttrs({
+      a.merge({
         cell: new Set([
           'c1',
           'c2',
@@ -170,7 +173,7 @@ describe('Collections', () => {
       });
 
       const b = new AElement();
-      b.mergeAttrs({
+      b.merge({
         cell: new Set([
           'c1',
           'c2',
@@ -180,7 +183,7 @@ describe('Collections', () => {
         ]),
       });
       const c = new AElement();
-      c.mergeAttrs({
+      c.merge({
         cell: new Set([
           'c1',
           'c2',
@@ -191,9 +194,26 @@ describe('Collections', () => {
         ]),
       });
 
+      const d = new AElement();
+      d.merge({
+        cell: new Set([
+          'c1',
+          'c2',
+          'c3',
+          'c4',
+        ]),
+        name: new Set([
+          'n1',
+          'n2',
+          'n3',
+          'n4',
+        ]),
+      });
+
       expect(b.compatible(a)).toBeTruthy();
       expect(c.compatible(a)).toBeFalsy();
       expect(a.compatible(b)).toBeFalsy();
+      expect(a.compatible(d)).toBeFalsy();
     });
   });
   describe('it has an ASet that', () => {
@@ -220,7 +240,7 @@ describe('Collections', () => {
       c3.value3 = 1;
 
       const aset = new ASet([c1, c2, c3]);
-      const mapping = ASet.computeMapping({ 1: [3, 4], 2: [5, 6] });
+      const mapping = ASet.generateMapping({ 1: [3, 4], 2: [5, 6] });
       const result = [...ASet.ap(mapping, aset)];
       const expected = _.flatten([c1, c2, c3].map(c => [...c.mapTo(mapping)]));
 
