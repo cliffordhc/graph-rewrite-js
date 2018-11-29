@@ -24,9 +24,9 @@ function E(g) {
 
 class SePO {
   constructor(lhs, k, rhs, kToLhs, kToRhs) {
-    this.lhs = lhs || {};
-    this.k = k || _.cloneDeep(this.lhs);
-    this.rhs = rhs || _.cloneDeep(this.lhs);
+    this.lhs = lhs != null ? lhs : {};
+    this.k = k != null ? k : _.cloneDeep(this.lhs);
+    this.rhs = rhs != null ? rhs : _.cloneDeep(this.lhs);
     const tkToLhs = kToLhs ? ASet.normalizeMap(kToLhs) : identity(this.lhs);
     this.kToLhs = tkToLhs;
     const tkToRhs = kToRhs ? ASet.normalizeMap(kToRhs) : identity(this.rhs);
@@ -64,7 +64,7 @@ class SePO {
   injectCloneNode(nodeId) {
     const kNode = this.k.nodeById(nodeId);
     const rhsNode = this.rhs.nodeById(nodeId);
-    if (!kNode || !rhsNode) throw new Error('Node does not exists');
+    if (kNode == null || rhsNode == null) throw new Error('Node does not exists');
     let newNodeId;
     for (let i = 1; ; i += 1) {
       newNodeId = `${nodeId}c${i}`;
@@ -228,9 +228,17 @@ class SePO {
 
     const mapEdgeAttrs = (edge) => {
       if (edge.from.label === 'A' || edge.to.label === 'A') {
-        const from = edge.from.label === 'A' ? edge.from.id : r2A[edge.from.id];
-        const to = edge.from.label === 'A' ? edge.to.id : r2A[edge.to.id];
-        return graph.edgeByIds(from, to).attrs;
+        const from = edge.from.label === 'A' ? [edge.from.id] : r2A[edge.from.id];
+        const to = edge.to.label === 'A' ? [edge.to.id] : r2A[edge.to.id];
+        return AElement.mergeAttrs(
+          ...[...ev(
+            [from, to],
+            (u, v) => {
+              const e1 = graph.edgeByIds(u, v);
+              return e1 != null ? e1 : false;
+            },
+          )].map(e => e.attrs),
+        );
       }
       const rEdge = this.rhs.edgeByIds(edge.from.id, edge.to.id);
       if (!rEdge) return {};
@@ -260,11 +268,11 @@ class SePO {
       }
       return rAttrs;
     };
-
-    return new Graph(
-      [...VH].map(n => [`${n.label}-${n.id}`, mapNodeAttrs(n)]),
-      [...EH].map(e => [`${e.from.label}-${e.from.id}`, `${e.to.label}-${e.to.id}`, mapEdgeAttrs(e)]),
-    );
+    const rhsMap = identity(this.rhs);
+    return [new Graph(
+      [...VH].map(n => [`${n.id}`, mapNodeAttrs(n)]),
+      [...EH].map(e => [`${e.from.id}`, `${e.to.id}`, mapEdgeAttrs(e)]),
+    ), rhsMap];
   }
 }
 

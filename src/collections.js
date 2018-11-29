@@ -11,7 +11,7 @@ function cartesian(propList, handler) {
         childIterator: handler.valuesGenerator(first),
         next() {
           const b = this.restIterator && this.restIterator.next();
-          if (!b || b.done) {
+          if (b == null || b.done) {
             this.a = this.childIterator.next();
             if (this.a.done) { return this.a; }
             if (_.isEmpty(rest)) {
@@ -225,7 +225,7 @@ class ASet {
       const values = _.keys(_.first(mappings));
       const normalized = values.reduce(
         (o, initial) => _.set(o, initial, mappings.reduce(
-          (v, map) => (_.isArray(v) ? _.flatMap(v, v2 => map[v2]) : _.flatten([map[v]])),
+          (v, map) => (_.isArray(v) ? _.flatMap(v, v2 => map[v2]).map(String) : _.flatten([map[v]]).map(String)),
           initial,
         )),
         {},
@@ -236,10 +236,9 @@ class ASet {
   }
 
   static computeInverse(map) {
-    const num = k => (_.isNaN(+k) ? k : _.toSafeInteger(k));
     return _.keys(map).reduce(
       (acc, k) => map[k].reduce(
-        (acc2, v) => _.set(acc2, v, acc2[v] ? acc2[v].concat(num(k)) : [num(k)]),
+        (acc2, v) => _.set(acc2, v, acc2[v] ? acc2[v].concat(k) : [k]),
         acc,
       ),
       {},
@@ -396,7 +395,7 @@ class ASet {
           childIterator: ASet.getIterable(targetSet),
           next() {
             const nextVal = this.valuesIterator && this.valuesIterator.next();
-            if (!nextVal || nextVal.done) {
+            if (nextVal == null || nextVal.done) {
               const val = this.childIterator.next();
               if (val.done) { return val; }
               this.valuesIterator = val.value.mapTo(mapping).values();
@@ -437,7 +436,7 @@ class ASet {
             childIterator: ASet.getIterable(cartesian(input, handler)),
             next() {
               const result = this.resultIterator && this.resultIterator.next();
-              if (!result || result.done) {
+              if (result == null || result.done) {
                 for (; ;) {
                   const cartesianProduct = this.childIterator.next();
                   if (cartesianProduct.done) return cartesianProduct;

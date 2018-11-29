@@ -7,7 +7,7 @@ const {
 class Vertex extends AElement {
   constructor(id, attrs) {
     super(attrs);
-    this.id = id || -1;
+    this.id = id != null ? id.toString() : -1;
     this.label = '<>';
     this.pred = new ASet();
     this.succ = new ASet();
@@ -20,8 +20,8 @@ ASet.setMappedProps(Vertex, ['id', 'label']);
 class Edge extends AElement {
   constructor(from, to, attrs) {
     super(attrs);
-    this.from = from || -1;
-    this.to = to || -1;
+    this.from = from != null ? from : -1;
+    this.to = to != null ? to : -1;
   }
 }
 
@@ -34,10 +34,10 @@ class Graph {
       _.merge(this, _.cloneDeep(nodes));
     } else {
       this.pNodes = new ASet();
-      const nodes2 = nodes || [];
+      const nodes2 = nodes != null ? nodes : [];
       nodes2.forEach(n => this.addNode(_.isArray(n) ? new Vertex(...n) : new Vertex(n)));
       this.pEdges = new ASet();
-      const edges2 = edges || [];
+      const edges2 = edges != null ? edges : [];
       edges2.forEach((e) => {
         const f = this.node(new Vertex(e[0]));
         const t = this.node(new Vertex(e[1]));

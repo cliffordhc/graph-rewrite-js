@@ -36,34 +36,34 @@ describe('Sesqui-pushout rewriting', () => {
     const l2g = { 1: 1, 2: 2, 3: 3 };
 
     const sepo1 = new SePO(l, k, r, k2l, k2r);
-    const result1 = sepo1.apply(g1, l2g);
+    const [result1] = sepo1.apply(g1, l2g);
 
     graphviz('delEdge1', g1, l, k, r, result1);
 
     const sepo2 = new SePO(l);
     sepo2.injectRemoveEdge(1, 2);
-    const result2 = sepo2.apply(g1, l2g);
+    const [result2] = sepo2.apply(g1, l2g);
     graphviz('delEdge2', g1, l, k, r, result2);
 
     const expected = {
       edges: [
         {
-          from: 'r-2',
-          to: 'r-3',
+          from: '2',
+          to: '3',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: {},
         },
         {
-          id: 'r-2',
+          id: '2',
           attrs: {},
         },
         {
-          id: 'r-3',
+          id: '3',
           attrs: {},
         },
       ],
@@ -82,31 +82,31 @@ describe('Sesqui-pushout rewriting', () => {
     const l2g = { 1: 1, 2: 2, 3: 3 };
 
     const sepo1 = new SePO(l, k, r, k2l, k2r);
-    const result1 = sepo1.apply(g1, l2g);
+    const [result1] = sepo1.apply(g1, l2g);
 
     graphviz('del1', g1, l, k, r, result1);
 
     const sepo2 = new SePO(l);
     sepo2.injectRemoveNode(3);
-    const result2 = sepo2.apply(g1, l2g);
+    const [result2] = sepo2.apply(g1, l2g);
 
     graphviz('del1', g1, l, k, r, result2);
 
     const expected = {
       edges: [
         {
-          from: 'r-1',
-          to: 'r-2',
+          from: '1',
+          to: '2',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: {},
         },
         {
-          id: 'r-2',
+          id: '2',
           attrs: {},
         },
       ],
@@ -125,13 +125,13 @@ describe('Sesqui-pushout rewriting', () => {
     const l2g = { 1: 1, 2: 2, 3: 3 };
 
     const sepo1 = new SePO(l, k, r, k2l, k2r);
-    const result1 = sepo1.apply(g1, l2g);
+    const [result1] = sepo1.apply(g1, l2g);
 
     graphviz('del2', g1, l, k, r, result1);
 
     const sepo2 = new SePO(l);
     sepo2.injectRemoveNode(2);
-    const result2 = sepo2.apply(g1, l2g);
+    const [result2] = sepo2.apply(g1, l2g);
 
     graphviz('del2', g1, l, k, r, result2);
 
@@ -139,11 +139,11 @@ describe('Sesqui-pushout rewriting', () => {
       edges: [],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: {},
         },
         {
-          id: 'r-3',
+          id: '3',
           attrs: {},
         },
       ],
@@ -162,45 +162,45 @@ describe('Sesqui-pushout rewriting', () => {
     const l2g = { 1: 'a' };
 
     const sepo1 = new SePO(l, k, r, k2l, k2r);
-    const result1 = sepo1.apply(g1, l2g);
+    const [result1] = sepo1.apply(g1, l2g);
 
     graphviz('clone', g1, l, k, r, result1);
 
     const sepo2 = new SePO(l);
     sepo2.injectCloneNode(1);
-    const result2 = sepo2.apply(g1, l2g);
+    const [result2] = sepo2.apply(g1, l2g);
     graphviz('clone', g1, l, k, r, result2);
 
     const expected = {
       edges: [
         {
-          from: 'r-1',
-          to: 'r-1',
+          from: '1',
+          to: '1',
           attrs: {},
         },
         {
-          from: 'r-1',
-          to: 'r-1c1',
+          from: '1',
+          to: '1c1',
           attrs: {},
         },
         {
-          from: 'r-1c1',
-          to: 'r-1',
+          from: '1c1',
+          to: '1',
           attrs: {},
         },
         {
-          from: 'r-1c1',
-          to: 'r-1c1',
+          from: '1c1',
+          to: '1c1',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: {},
         },
         {
-          id: 'r-1c1',
+          id: '1c1',
           attrs: {},
         },
       ],
@@ -219,31 +219,31 @@ describe('Sesqui-pushout rewriting', () => {
     const l2g = { 1: 'a' };
 
     const sepo1 = new SePO(l, k, r, k2l, k2r);
-    const result1 = sepo1.apply(g1, l2g);
+    const [result1] = sepo1.apply(g1, l2g);
 
     graphviz('add', g1, l, k, r, result1);
 
     const sepo2 = new SePO(l);
     sepo2.injectAddNode(2);
-    const result2 = sepo2.apply(g1, l2g);
+    const [result2] = sepo2.apply(g1, l2g);
 
     graphviz('add', g1, l, k, r, result2);
 
     const expected = {
       edges: [
         {
-          from: 'r-1',
-          to: 'r-1',
+          from: '1',
+          to: '1',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: {},
         },
         {
-          id: 'r-2',
+          id: '2',
           attrs: {},
         },
       ],
@@ -262,27 +262,27 @@ describe('Sesqui-pushout rewriting', () => {
     const l2g = { 1: 'a', 2: 'b' };
 
     const sepo1 = new SePO(l, k, r, k2l, k2r);
-    const result1 = sepo1.apply(g1, l2g);
+    const [result1] = sepo1.apply(g1, l2g);
 
     graphviz('add', g1, l, k, r, result1);
 
     const sepo2 = new SePO(l);
     sepo2.injectMergeNodes([1, 2]);
-    const result2 = sepo2.apply(g1, l2g);
+    const [result2] = sepo2.apply(g1, l2g);
 
     graphviz('add', g1, l, k, r, result2);
 
     const expected = {
       edges: [
         {
-          from: 'r-1_2',
-          to: 'r-1_2',
+          from: '1_2',
+          to: '1_2',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1_2',
+          id: '1_2',
           attrs: {},
         },
       ],
@@ -297,23 +297,23 @@ describe('Sesqui-pushout rewriting', () => {
     const sepo = new SePO(l);
     sepo.injectRemoveNodeAttrs(1, { name: 'n1' });
     sepo.injectRemoveNodeAttrs(2, { cell: 'c2' });
-    const result = sepo.apply(g1, l2g);
+    const [result] = sepo.apply(g1, l2g);
 
     const expected = {
       edges: [
         {
-          from: 'r-1',
-          to: 'r-2',
+          from: '1',
+          to: '2',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: { cell: new Set(['c1']) },
         },
         {
-          id: 'r-2',
+          id: '2',
           attrs: {},
         },
       ],
@@ -327,23 +327,23 @@ describe('Sesqui-pushout rewriting', () => {
     const sepo = new SePO(l);
     sepo.injectAddNodeAttrs(1, { name: 'n1' });
     sepo.injectAddNodeAttrs(2, { cell: 'c2' });
-    const result = sepo.apply(g1, l2g);
+    const [result] = sepo.apply(g1, l2g);
 
     const expected = {
       edges: [
         {
-          from: 'r-1',
-          to: 'r-2',
+          from: '1',
+          to: '2',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: { name: new Set(['n1']), cell: new Set(['c1']) },
         },
         {
-          id: 'r-2',
+          id: '2',
           attrs: { cell: new Set(['c2']) },
         },
       ],
@@ -357,32 +357,32 @@ describe('Sesqui-pushout rewriting', () => {
     const sepo = new SePO(l);
     sepo.injectRemoveEdgeAttrs(1, 2, { name: 'n1' });
     sepo.injectRemoveEdgeAttrs(2, 3, { cell: 'c2' });
-    const result = sepo.apply(g1, l2g);
+    const [result] = sepo.apply(g1, l2g);
 
     const expected = {
       edges: [
         {
-          from: 'r-1',
-          to: 'r-2',
+          from: '1',
+          to: '2',
           attrs: { cell: new Set(['c1']) },
         },
         {
-          from: 'r-2',
-          to: 'r-3',
+          from: '2',
+          to: '3',
           attrs: {},
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: {},
         },
         {
-          id: 'r-2',
+          id: '2',
           attrs: {},
         },
         {
-          id: 'r-3',
+          id: '3',
           attrs: {},
         },
       ],
@@ -397,32 +397,32 @@ describe('Sesqui-pushout rewriting', () => {
     sepo.injectAddEdgeAttrs(1, 2, { name: 'n1' });
     sepo.injectAddEdgeAttrs(2, 3, { cell: 'c2' });
     debugger
-    const result = sepo.apply(g1, l2g);
+    const [result] = sepo.apply(g1, l2g);
 
     const expected = {
       edges: [
         {
-          from: 'r-1',
-          to: 'r-2',
+          from: '1',
+          to: '2',
           attrs: { name: new Set(['n1']), cell: new Set(['c1']) },
         },
         {
-          from: 'r-2',
-          to: 'r-3',
+          from: '2',
+          to: '3',
           attrs: { cell: new Set(['c2']) },
         },
       ],
       nodes: [
         {
-          id: 'r-1',
+          id: '1',
           attrs: {},
         },
         {
-          id: 'r-2',
+          id: '2',
           attrs: {},
         },
         {
-          id: 'r-3',
+          id: '3',
           attrs: {},
         },
       ],
